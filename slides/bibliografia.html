@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuentes — Vibe Coding con Google</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0d0913; --surface:#1c1628; --text-1:#f3eefb; --muted:#9089a8;
+    --accent:#ac8dff; --line: rgba(243,238,251,0.14);
+    --font-display:'Space Grotesk', Helvetica Neue, Helvetica, Arial, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: light){
+    :root{ --bg:#f8f6fc; --surface:#ffffff; --text-1:#15101f; --muted:#655f78; --line: rgba(21,16,31,0.12); }
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{
+    background:var(--bg); color:var(--text-1); font-family:var(--font-display);
+    min-height:100vh; padding:48px 20px 80px;
+}
+.wrap{ max-width:720px; margin:0 auto; }
+.eyebrow{ font-family:var(--font-mono); font-size:13px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:10px; }
+.eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); }
+h1{ font-size:clamp(28px, 6vw, 42px); font-weight:700; margin-top:14px; line-height:1.15; }
+h1 em{ font-style:normal; color:var(--accent); }
+.sub{ margin-top:14px; color:var(--muted); font-size:15px; line-height:1.5; max-width:56ch; }
+.group{ margin-top:44px; }
+.group-title{ font-family:var(--font-mono); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+.source{
+    display:block; padding:18px 20px; margin-bottom:10px;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    text-decoration:none; color:inherit; transition:border-color 0.2s ease, transform 0.2s ease;
+}
+.source:hover{ border-color:var(--accent); transform:translateY(-2px); }
+.source-title{ font-weight:600; font-size:16px; }
+.source-url{ font-family:var(--font-mono); font-size:12.5px; color:var(--muted); margin-top:6px; word-break:break-all; }
+footer{ margin-top:56px; padding-top:24px; border-top:1px solid var(--line); font-family:var(--font-mono); font-size:12.5px; color:var(--muted); }
+footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="dot"></span>Vibe Coding con Google</div>
+  <h1>Fuentes y <em>bibliografía</em></h1>
+  <p class="sub">Estudios, documentación oficial y herramientas citadas durante la charla "Vibe Coding con Google: De la idea al MVP en tiempo récord".</p>
+
+  <div class="group">
+    <div class="group-title">Datos y estudios</div>
+    <a class="source" href="https://blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025/" target="_blank" rel="noopener">
+      <div class="source-title">DORA Report 2025 — Google</div>
+      <div class="source-url">blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025</div>
+    </a>
+    <a class="source" href="https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/" target="_blank" rel="noopener">
+      <div class="source-title">Quantifying GitHub Copilot's impact on developer productivity and happiness</div>
+      <div class="source-url">github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness</div>
+    </a>
+    <a class="source" href="https://survey.stackoverflow.co/2025/ai/" target="_blank" rel="noopener">
+      <div class="source-title">Stack Overflow Developer Survey 2025 — IA</div>
+      <div class="source-url">survey.stackoverflow.co/2025/ai</div>
+    </a>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Herramientas y protocolos oficiales</div>
+    <a class="source" href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener">
+      <div class="source-title">Introducing the Model Context Protocol — Anthropic</div>
+      <div class="source-url">anthropic.com/news/model-context-protocol</div>
+    </a>
+    <a class="source" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
+      <div class="source-title">NotebookLM (Gemini Notebook) — Google</div>
+      <div class="source-url">notebooklm.google.com</div>
+    </a>
+    <a class="source" href="https://developers.googleblog.com/build-with-google-antigravity-our-new-agentic-development-platform/" target="_blank" rel="noopener">
+      <div class="source-title">Build with Google Antigravity — Google Developers Blog</div>
+      <div class="source-url">developers.googleblog.com/build-with-google-antigravity-our-new-agentic-development-platform</div>
+    </a>
+    <a class="source" href="https://stitch.withgoogle.com/" target="_blank" rel="noopener">
+      <div class="source-title">Stitch — Design with AI (Google Labs)</div>
+      <div class="source-url">stitch.withgoogle.com</div>
+    </a>
+    <a class="source" href="https://www.figma.com/blog/introducing-figma-mcp-server/" target="_blank" rel="noopener">
+      <div class="source-title">Introducing our Dev Mode MCP server — Figma</div>
+      <div class="source-url">figma.com/blog/introducing-figma-mcp-server</div>
+    </a>
+    <a class="source" href="https://n8n.io/" target="_blank" rel="noopener">
+      <div class="source-title">n8n — AI workflow automation platform</div>
+      <div class="source-url">n8n.io</div>
+    </a>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Seguridad</div>
+    <a class="source" href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">
+      <div class="source-title">OWASP Top Ten Web Application Security Risks</div>
+      <div class="source-url">owasp.org/www-project-top-ten</div>
+    </a>
+  </div>
+
+  <footer>
+    <a href="/">← Volver al deck</a>
+  </footer>
+</div>
+</body>
+</html>
