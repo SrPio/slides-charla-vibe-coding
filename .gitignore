@@ -1,0 +1,10 @@
+# Word lock/temp files
+~$*.docx
+~$*.doc
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Skill scratch dir if ever created inside the project
+.frontend-slides/

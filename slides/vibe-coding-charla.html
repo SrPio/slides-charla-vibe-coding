@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe Coding con Google — De la idea al MVP en tiempo récord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   THEME TOKENS
+   Neo-Grid Bold, recolored: violet signal accent,
+   deep-plum dark theme by default + light toggle.
+   Edit these variables to retune the whole deck.
+   =========================================== */
+:root{
+    --stage-bg:#120e1a;
+    --accent:#ac8dff;
+    --accent-2:#7c5cff;
+    --accent-text:#140e22;
+    --chart-b:#5eead4;
+    /* Chart tracks always sit on dark ".ink" panels regardless of theme —
+       kept constant so they never blend into a flipped light-theme background. */
+    --chart-track: rgba(255,255,255,0.16);
+    --font-display:'Space Grotesk', Helvetica Neue, Helvetica, Arial, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, monospace;
+    --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+    --dur-normal:0.6s;
+    /* Presenter-controlled type scale — every font-size in this deck is
+       calc(Npx * var(--text-scale)) so bumping this scales all text uniformly
+       without touching spacing/padding/grid layout. Range clamped by the UI to 0.85–1.3. */
+    --text-scale: 1;
+}
+:root, [data-theme="dark"]{
+    --frame-bg:#0d0913;
+    --surface-1:#1c1628;
+    --surface-2:#050308;
+    --text-1:#f3eefb;
+    --text-2:#f3eefb;
+    --muted:#9089a8;
+    --line: rgba(243,238,251,0.14);
+    --glow-1: rgba(124,92,255,0.38);
+    --glow-2: rgba(94,234,212,0.16);
+}
+[data-theme="light"]{
+    --frame-bg:#e9e4f2;
+    --surface-1:#f8f6fc;
+    --surface-2:#15101f;
+    --text-1:#15101f;
+    --text-2:#f8f6fc;
+    --muted:#655f78;
+    --line: rgba(21,16,31,0.16);
+    --glow-1: rgba(124,92,255,0.20);
+    --glow-2: rgba(14,170,150,0.14);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+/* ===========================================
+   FIXED 16:9 STAGE — mandatory base (viewport-base.css)
+   =========================================== */
+html, body{ width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport{ position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage{ position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--frame-bg); }
+/* Slides crossfade (old opacity 1->0, new 0->1) at the same time, so whatever
+   sits behind them during that overlap is visible for a frame. It must match
+   --frame-bg (not the old white fallback) or the crossfade reads as a white flash. */
+.slide{ position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--frame-bg); font-family:var(--font-display); color:var(--text-1); transition: opacity 0.5s var(--ease-out-expo); }
+.slide.active, .slide.visible{ visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img, video, canvas, svg{ max-width:100%; max-height:100%; }
+.deck-controls{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media print{
+    @page{ size:landscape; margin:0; }
+    html, body{ width:1920px; height:auto; overflow:visible; background:#fff; }
+    .deck-viewport{ position:static; overflow:visible; background:#fff; }
+    .deck-stage{ position:static; width:auto; height:auto; transform:none !important; background:none; }
+    .slide{ position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
+    .slide:last-child{ break-after:auto; page-break-after:auto; }
+    .deck-controls, .theme-toggle, .text-scale-ctrl, .progress-tag, .nav-hint, .edit-hotzone, .edit-toggle{ display:none !important; }
+    /* Every slide-entrance animation below is gated on ".slide.visible" so only the
+       currently-active slide ever reaches its rendered end-state. For print, every
+       slide must render fully regardless of which one was active in the browser —
+       force every gated element straight to its finished state on ALL slides. */
+    .frame{ opacity:1 !important; transform:none !important; }
+    .parallax-orbs{ display:none !important; }
+    .reveal{ opacity:1 !important; transform:none !important; }
+    .photo-portrait img{ opacity:1 !important; transform:none !important; }
+    .radial-fill{ stroke-dashoffset:var(--offset, 0) !important; }
+    .bar-fill{ height:var(--h,0%) !important; }
+    .qr-tile{ opacity:1 !important; transform:none !important; }
+}
+@media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:0.01ms !important; transition-duration:0.2s !important; }
+}
+
+/* ===========================================
+   GRID FRAME — the universal 12x8 composition grid
+   =========================================== */
+.frame{
+    position:absolute; inset:40px; z-index:2;
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    grid-template-rows:repeat(8,1fr);
+    gap:12px;
+    opacity:0; transform:translateY(36px);
+    transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+}
+.slide.visible .frame{ opacity:1; transform:translateY(0); }
+
+/* Parallax ambience layer — sits behind the frame, moves at a different
+   rate than foreground content on mousemove + on slide transitions. */
+.parallax-orbs{ position:absolute; inset:-60px; z-index:1; pointer-events:none; overflow:hidden;
+    opacity:0; transform:translateY(14px) scale(1.02);
+    transition: opacity 1.1s var(--ease-out-expo), transform 1.1s var(--ease-out-expo);
+}
+.slide.visible .parallax-orbs{ opacity:1; transform:translateY(0) scale(1); }
+.orb{ position:absolute; border-radius:50%; filter:blur(110px); will-change:transform; transition: transform 0.6s ease-out; }
+.orb.o1{ width:760px; height:760px; background:var(--glow-1); top:-220px; left:-160px; }
+.orb.o2{ width:560px; height:560px; background:var(--glow-2); bottom:-180px; right:-140px; }
+.orb.o3{ width:420px; height:420px; background:var(--glow-1); top:38%; right:8%; opacity:0.5; }
+
+/* ===========================================
+   PANELS
+   =========================================== */
+.panel{ position:relative; overflow:hidden; background:var(--surface-1); color:var(--text-1); }
+.panel.ink{ background:var(--surface-2); color:var(--text-2); }
+.panel.accent{ background:var(--accent); color:var(--accent-text); }
+.panel.bordered{ border:1px solid var(--line); }
+
+/* Signature grid texture inside panels */
+.panel::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:52px 52px;
+    opacity:0.5;
+}
+.panel.accent::after{ background-image:none; }
+
+/* Social link cards (slide 34) — panels that are also real <a> links */
+.social-card{
+    display:flex; flex-direction:column; justify-content:center;
+    padding:44px 40px; text-decoration:none; color:inherit;
+    transition: transform 0.35s var(--ease-out-expo);
+}
+.social-card:hover{ transform:translateY(-6px); }
+.social-card:nth-of-type(1){ grid-column:1/4; grid-row:2/9; }
+.social-card:nth-of-type(2){ grid-column:4/7; grid-row:2/9; }
+.social-card:nth-of-type(3){ grid-column:7/10; grid-row:2/9; }
+.social-card:nth-of-type(4){ grid-column:10/13; grid-row:2/9; }
+.social-arrow{ position:absolute; top:32px; right:32px; width:28px; height:28px; opacity:0.6; }
+.social-arrow svg{ width:100%; height:100%; }
+.qr-tile{
+    width:148px; height:148px; margin-top:28px; padding:12px;
+    background:#f3f1f7; display:flex; align-items:center; justify-content:center;
+    opacity:0; transform:scale(0.92);
+    transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo);
+    transition-delay:0.25s;
+}
+.slide.visible .qr-tile{ opacity:1; transform:scale(1); }
+.qr-tile svg{ width:100%; height:100%; }
+
+/* ===========================================
+   TYPOGRAPHY
+   =========================================== */
+.eyebrow{ font-family:var(--font-mono); font-size:calc(20px * var(--text-scale)); font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:12px; }
+.eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 14px var(--accent); }
+
+h1.display{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.03em; line-height:0.95; font-size:calc(118px * var(--text-scale)); }
+h1.title{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.02em; line-height:0.98; font-size:calc(80px * var(--text-scale)); }
+h2.subtitle{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.015em; line-height:1.05; font-size:calc(48px * var(--text-scale)); }
+h3.card-h{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.01em; line-height:1.08; font-size:calc(32px * var(--text-scale)); }
+p.body{ font-family:var(--font-display); font-weight:400; font-size:calc(26px * var(--text-scale)); line-height:1.42; }
+p.body-sm{ font-family:var(--font-display); font-weight:400; font-size:calc(21px * var(--text-scale)); line-height:1.48; }
+.label{ font-family:var(--font-mono); font-size:calc(16px * var(--text-scale)); letter-spacing:0.1em; text-transform:uppercase; opacity:0.75; }
+mark.hi{ background:var(--accent); color:var(--accent-text); padding:0 8px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+em.hi{ font-style:normal; color:var(--accent); }
+
+/* ===========================================
+   CHROME — pagenum, blockmark, corner-mark
+   =========================================== */
+.pagenum{ position:absolute; left:0; bottom:0; z-index:5; background:var(--surface-1); color:var(--text-1); padding:14px 22px; font-family:var(--font-mono); font-size:calc(20px * var(--text-scale)); letter-spacing:0.04em; }
+.pagenum.invert{ background:var(--surface-2); color:var(--text-2); }
+.pagenum.accent{ background:var(--accent); color:var(--accent-text); }
+
+.blockmark{ width:44px; height:44px; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:4px; }
+.blockmark span{ background:currentColor; opacity:0.15; }
+.blockmark span:nth-child(1), .blockmark span:nth-child(4){ opacity:1; }
+
+.deck-title-tag{ position:absolute; top:56px; right:56px; z-index:5; font-family:var(--font-mono); font-size:calc(15px * var(--text-scale)); letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+.deck-title-tag b{ color:var(--accent); }
+
+/* ===========================================
+   REVEAL / STAGGER
+   =========================================== */
+.reveal{ opacity:0; transform:translateY(26px); transition:opacity var(--dur-normal) var(--ease-out-expo), transform var(--dur-normal) var(--ease-out-expo); }
+.slide.visible .reveal{ opacity:1; transform:translateY(0); }
+.slide.visible .reveal:nth-of-type(1){ transition-delay:0.05s; }
+.slide.visible .reveal:nth-of-type(2){ transition-delay:0.14s; }
+.slide.visible .reveal:nth-of-type(3){ transition-delay:0.23s; }
+.slide.visible .reveal:nth-of-type(4){ transition-delay:0.32s; }
+.slide.visible .reveal:nth-of-type(5){ transition-delay:0.41s; }
+.slide.visible .reveal:nth-of-type(6){ transition-delay:0.5s; }
+.slide.visible .reveal:nth-of-type(7){ transition-delay:0.59s; }
+.slide.visible .reveal:nth-of-type(8){ transition-delay:0.68s; }
+
+/* ===========================================
+   SPEAKER PORTRAIT — photo panel treatment
+   Same entrance language as .reveal (fade + the deck's
+   ease-out-expo curve) with a subtle Ken-Burns scale-in.
+   =========================================== */
+.photo-panel{ padding:0 !important; }
+.photo-portrait{ position:absolute; inset:0; overflow:hidden; z-index:1; }
+.photo-portrait img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 12%;
+    opacity:0; transform:scale(1.1) translateY(18px);
+    transition: opacity 1s var(--ease-out-expo), transform 1.3s var(--ease-out-expo);
+    transition-delay:0.1s;
+    filter:saturate(1.05);
+}
+.slide.visible .photo-portrait img{ opacity:1; transform:scale(1) translateY(0); }
+.photo-scrim{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    background: linear-gradient(180deg, rgba(5,3,8,0.05) 0%, rgba(5,3,8,0.05) 45%, rgba(5,3,8,0.55) 78%, rgba(5,3,8,0.92) 100%);
+}
+.photo-caption{ position:absolute; left:0; right:0; bottom:0; z-index:3; padding:40px 44px; }
+.photo-mark{ position:absolute; top:32px; left:32px; z-index:3; }
+
+/* ===========================================
+   ICON BADGES — tool/brand chips
+   =========================================== */
+.tool-badge{ display:flex; align-items:center; gap:16px; padding:18px 22px; background:var(--surface-1); border:1px solid var(--line); }
+.tool-badge .ic{ width:48px; height:48px; min-width:48px; display:flex; align-items:center; justify-content:center; }
+.tool-badge .ic svg{ width:100%; height:100%; }
+.tool-badge .tx .nm{ font-family:var(--font-display); font-weight:700; font-size:calc(22px * var(--text-scale)); text-transform:uppercase; letter-spacing:-0.005em; }
+.tool-badge .tx .ds{ font-family:var(--font-mono); font-size:calc(14px * var(--text-scale)); color:var(--muted); letter-spacing:0.02em; margin-top:2px; }
+.tool-row{ display:flex; flex-wrap:wrap; gap:14px; }
+.tool-chip{ display:inline-flex; align-items:center; gap:10px; padding:10px 16px; background:var(--surface-2); color:var(--text-2); font-family:var(--font-mono); font-size:calc(15px * var(--text-scale)); letter-spacing:0.05em; text-transform:uppercase; }
+.tool-chip .ic{ width:22px; height:22px; }
+.tool-chip .ic svg{ width:100%; height:100%; }
+
+/* ===========================================
+   STAT / CHART COMPONENTS
+   =========================================== */
+.stat-num{ font-family:var(--font-display); font-weight:700; letter-spacing:-0.03em; line-height:0.9; font-size:calc(168px * var(--text-scale)); }
+.stat-num.lg{ font-size:calc(230px * var(--text-scale)); }
+.stat-num.sm{ font-size:calc(104px * var(--text-scale)); }
+.stat-unit{ font-size:0.4em; vertical-align:0.18em; }
+
+.radial-wrap{ position:relative; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+.radial-ring{ position:relative; width:340px; height:340px; flex:none; }
+.radial-wrap svg{ width:340px; height:340px; transform:rotate(-90deg); }
+.radial-wrap circle{ fill:none; stroke-width:22; }
+.radial-track{ stroke:var(--chart-track); }
+.radial-fill{ stroke:var(--accent); stroke-linecap:round; stroke-dasharray:816; stroke-dashoffset:816; transition:stroke-dashoffset 1.6s var(--ease-out-expo); }
+.slide.visible .radial-fill{ stroke-dashoffset:var(--offset, 816); }
+.radial-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; }
+.radial-label .n{ font-family:var(--font-display); font-weight:700; font-size:calc(96px * var(--text-scale)); letter-spacing:-0.02em; }
+/* Caption now sits below the ring instead of stacked inside .radial-label,
+   so it never competes with the number for space inside the circle. */
+.radial-caption{ font-family:var(--font-mono); font-size:calc(15px * var(--text-scale)); letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); text-align:center; max-width:320px; }
+
+.bars{ display:flex; align-items:flex-end; gap:28px; height:100%; padding-top:20px; }
+.bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:14px; }
+.bar-track{ width:100%; max-width:64px; height:100%; display:flex; align-items:flex-end; background:var(--chart-track); position:relative; }
+.bar-fill{ width:100%; height:0%; background:var(--accent); transition:height 1.4s var(--ease-out-expo); }
+.slide.visible .bar-fill{ height:var(--h,0%); }
+.bar-fill.b{ background:var(--chart-b); }
+.bar-num{ font-family:var(--font-display); font-weight:700; font-size:calc(30px * var(--text-scale)); }
+.bar-name{ font-family:var(--font-mono); font-size:calc(14px * var(--text-scale)); letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); text-align:center; }
+
+/* ===========================================
+   FLOW / TIMELINE COMPONENTS
+   =========================================== */
+.flow-row{ display:flex; align-items:stretch; gap:0; height:100%; }
+.flow-step{ flex:1; display:flex; flex-direction:column; gap:14px; padding:8px 18px; position:relative; }
+.flow-num{ font-family:var(--font-display); font-weight:700; font-size:calc(56px * var(--text-scale)); color:var(--accent); letter-spacing:-0.02em; }
+.flow-arrow{ display:flex; align-items:center; justify-content:center; width:56px; color:var(--muted); }
+.flow-arrow svg{ width:32px; height:32px; }
+
+/* ===========================================
+   THEME TOGGLE + DECK CONTROLS (outside stage)
+   =========================================== */
+.theme-toggle{
+    position:fixed; top:22px; right:22px; z-index:2000;
+    width:52px; height:52px; border:1px solid rgba(255,255,255,0.25);
+    background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
+    color:#f3eefb; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-family:var(--font-mono); font-size:20px;
+}
+.theme-toggle:hover{ background:rgba(172,141,255,0.25); }
+
+.progress-tag{
+    position:fixed; bottom:24px; right:24px; z-index:2000;
+    font-family:var(--font-mono); font-size:14px; letter-spacing:0.08em;
+    color:rgba(243,238,251,0.55); background:rgba(20,16,30,0.5); padding:8px 14px;
+    border:1px solid rgba(255,255,255,0.14);
+}
+.nav-hint{
+    position:fixed; bottom:24px; left:24px; z-index:2000;
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.06em;
+    color:rgba(243,238,251,0.4);
+}
+
+/* Text-scale control — bumps --text-scale on the root, which every slide
+   font-size reads via calc(Npx * var(--text-scale)). Chrome buttons themselves
+   stay a fixed size; only slide typography responds. */
+.text-scale-ctrl{
+    position:fixed; top:22px; right:86px; z-index:2000;
+    display:flex; align-items:center; gap:1px;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
+    font-family:var(--font-mono); font-size:13px; color:#f3eefb;
+}
+.text-scale-ctrl button{
+    width:38px; height:52px; border:none; background:transparent; color:inherit;
+    font-family:var(--font-mono); font-size:20px; cursor:pointer;
+}
+.text-scale-ctrl button:hover{ background:rgba(172,141,255,0.25); }
+.text-scale-ctrl .val{ width:44px; text-align:center; font-size:12px; letter-spacing:0.04em; opacity:0.8; }
+
+.export-pdf-btn{
+    position:fixed; top:22px; right:222px; z-index:2000;
+    height:52px; padding:0 18px; display:flex; align-items:center; gap:10px;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
+    color:#f3eefb; font-family:var(--font-mono); font-size:13px; letter-spacing:0.06em; text-transform:uppercase;
+    cursor:pointer;
+}
+.export-pdf-btn:hover{ background:rgba(172,141,255,0.25); }
+.export-pdf-btn svg{ width:16px; height:16px; }
+
+/* Edit mode affordance */
+.edit-hotzone{ position:fixed; top:0; left:0; width:80px; height:80px; z-index:2500; cursor:pointer; }
+.edit-toggle{ position:fixed; top:18px; left:18px; z-index:2501; width:40px; height:40px; border:1px solid rgba(255,255,255,0.3); background:rgba(20,16,30,0.6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+.edit-toggle.show, .edit-toggle.active{ opacity:1; pointer-events:auto; }
+[contenteditable="true"]{ outline:1.5px dashed var(--accent); outline-offset:4px; }
+
+@media (prefers-reduced-motion: reduce){
+    .orb{ transition:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===========================================
+     ICON LIBRARY — simplified brand-colored glyphs
+     reused across tool badges via <use href="#id">
+     =========================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="ic-google" viewBox="0 0 48 48">
+  <path fill="#EA4335" d="M24 9.5c3.4 0 6.4 1.2 8.8 3.5l6.5-6.5C35.1 2.5 30 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.6 5.9C12.1 13.1 17.6 9.5 24 9.5z"/>
+  <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.6c-.5 2.9-2.2 5.4-4.6 7.1l7.3 5.7C43.6 37.9 46.5 31.8 46.5 24.5z"/>
+  <path fill="#FBBC05" d="M10.2 19.1a14.4 14.4 0 000 9.8l-7.6 5.9a24 24 0 010-21.6z"/>
+  <path fill="#34A853" d="M24 48c6 0 11.1-2 14.8-5.3l-7.3-5.7c-2 1.4-4.6 2.2-7.5 2.2-6.4 0-11.9-3.6-14.2-9.6l-7.6 5.9C6.5 42.6 14.6 48 24 48z"/>
+</symbol>
+<symbol id="ic-github" viewBox="0 0 16 16">
+  <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+</symbol>
+<symbol id="ic-claude" viewBox="0 0 24 24">
+  <g fill="#D97757">
+    <rect x="10.9" y="1" width="2.2" height="22" rx="1.1"/>
+    <rect x="10.9" y="1" width="2.2" height="22" rx="1.1" transform="rotate(60 12 12)"/>
+    <rect x="10.9" y="1" width="2.2" height="22" rx="1.1" transform="rotate(120 12 12)"/>
+  </g>
+</symbol>
+<symbol id="ic-cursor" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M4 2l16 8-6.6 1.8L11.5 20 4 2z"/>
+</symbol>
+<symbol id="ic-gemini" viewBox="0 0 24 24">
+  <path fill="url(#gemgrad)" d="M12 2c0 5.5 4.5 10 10 10-5.5 0-10 4.5-10 10 0-5.5-4.5-10-10-10 5.5 0 10-4.5 10-10z"/>
+  <defs><linearGradient id="gemgrad" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#4285F4"/><stop offset="1" stop-color="#9b6bff"/></linearGradient></defs>
+</symbol>
+<symbol id="ic-figma" viewBox="0 0 24 24">
+  <path fill="#F24E1E" d="M8 1h4v6H8a3 3 0 010-6z"/>
+  <path fill="#FF7262" d="M12 1h4a3 3 0 010 6h-4V1z"/>
+  <path fill="#A259FF" d="M12 7h4a3 3 0 010 6h-4V7z"/>
+  <path fill="#1ABCFE" d="M8 13h4v3a3 3 0 11-4-3z"/>
+  <path fill="#0ACF83" d="M8 7h4v6H8a3 3 0 010-6z"/>
+</symbol>
+<symbol id="ic-supabase" viewBox="0 0 24 24">
+  <path fill="#3ECF8E" d="M13.5 1L4 14h7l-1.5 9L20 10h-7z"/>
+</symbol>
+<symbol id="ic-firebase" viewBox="0 0 24 24">
+  <path fill="#FFA000" d="M5 20L7.5 2.5c.1-.6.9-.7 1.2-.1L11 7 5 20z"/>
+  <path fill="#FF8F00" d="M5 20l3.6-6.6 2.3 2.4L5 20z"/>
+  <path fill="#FFCA28" d="M5 20l9-16.5L19.5 18 5 20z"/>
+</symbol>
+<symbol id="ic-mongodb" viewBox="0 0 24 24">
+  <path fill="#00ED64" d="M12 2c3 4 5 7.5 5 11.5A5 5 0 0112 19a5 5 0 01-5-5.5C7 9.5 9 6 12 2z"/>
+  <rect x="11.3" y="17" width="1.4" height="5" fill="#00ED64"/>
+</symbol>
+<symbol id="ic-n8n" viewBox="0 0 24 24">
+  <circle cx="4.5" cy="12" r="3" fill="#EA4B71"/>
+  <circle cx="19.5" cy="6" r="3" fill="#EA4B71"/>
+  <circle cx="19.5" cy="18" r="3" fill="#EA4B71"/>
+  <path stroke="#EA4B71" stroke-width="1.6" d="M7.2 11l9.6-4M7.2 13l9.6 4"/>
+</symbol>
+<symbol id="ic-python" viewBox="0 0 24 24">
+  <path fill="#3776AB" d="M12 2c-4 0-4 2-4 2v3h4v1H6s-3 0-3 5 3 5 3 5h2v-3s0-3 3-3h4s3 0 3-3V4s0-2-6-2z"/>
+  <path fill="#FFD43B" d="M12 22c4 0 4-2 4-2v-3h-4v-1h6s3 0 3-5-3-5-3-5h-2v3s0 3-3 3H9s-3 0-3 3v4s0 2 6 2z"/>
+</symbol>
+<symbol id="ic-linear" viewBox="0 0 24 24">
+  <g stroke="#5E6AD2" stroke-width="2.4" stroke-linecap="round">
+    <line x1="3" y1="16" x2="16" y2="3"/>
+    <line x1="7" y1="20" x2="20" y2="7"/>
+    <line x1="11" y1="23" x2="23" y2="11"/>
+  </g>
+</symbol>
+<symbol id="ic-jira" viewBox="0 0 24 24">
+  <path fill="#2684FF" d="M12 2l9 8.5-9 8.5-9-8.5z" opacity="0.5"/>
+  <path fill="#0052CC" d="M12 6l6.5 6-6.5 6-6.5-6z"/>
+</symbol>
+<symbol id="ic-terminal" viewBox="0 0 24 24">
+  <rect x="2" y="4" width="20" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <path d="M6 9l4 3-4 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="12" y1="15" x2="17" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+</symbol>
+<symbol id="ic-rocket" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 2l4 8-4 3-4-3z"/>
+  <path fill="currentColor" opacity="0.55" d="M8 10l-3 3 2 5 3-3zM16 10l3 3-2 5-3-3z"/>
+</symbol>
+<symbol id="ic-diamond" viewBox="0 0 24 24">
+  <path fill="url(#diagrad)" d="M12 1l6 7-6 15-6-15z"/>
+  <defs><linearGradient id="diagrad" x1="6" y1="1" x2="18" y2="23"><stop offset="0" stop-color="#4285F4"/><stop offset="1" stop-color="#34A853"/></linearGradient></defs>
+</symbol>
+<symbol id="ic-book" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M4 4c3-1.5 6-1 8 0v16c-2-1-5-1.5-8 0V4z"/>
+  <path fill="currentColor" opacity="0.55" d="M20 4c-3-1.5-6-1-8 0v16c2-1 5-1.5 8 0V4z"/>
+</symbol>
+<symbol id="ic-layers" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 2l10 5.5L12 13 2 7.5z"/>
+  <path fill="currentColor" opacity="0.6" d="M2 12.5l10 5.5 10-5.5"/>
+  <path fill="none" stroke="currentColor" stroke-width="1.6" d="M2 12.5l10 5.5 10-5.5M2 17l10 5.5L22 17"/>
+</symbol>
+<symbol id="ic-docs" viewBox="0 0 24 24">
+  <rect x="4" y="2" width="16" height="20" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <line x1="7.5" y1="7" x2="16.5" y2="7" stroke="currentColor" stroke-width="1.6"/>
+  <line x1="7.5" y1="11.5" x2="16.5" y2="11.5" stroke="currentColor" stroke-width="1.6"/>
+  <line x1="7.5" y1="16" x2="13" y2="16" stroke="currentColor" stroke-width="1.6"/>
+</symbol>
+<symbol id="ic-shield" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 2l8 3.5v6c0 5-3.4 8.7-8 10.5-4.6-1.8-8-5.5-8-10.5v-6z"/>
+</symbol>
+<symbol id="ic-arrow" viewBox="0 0 24 24">
+  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 12h16M14 6l6 6-6 6"/>
+</symbol>
+<symbol id="ic-check" viewBox="0 0 24 24">
+  <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4 12l6 6L20 6"/>
+</symbol>
+<symbol id="ic-flask" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M9 2h6v1.2L15 9l5 10.5A2 2 0 0118.2 22H5.8A2 2 0 014 19.5L9 9 9 3.2z"/>
+</symbol>
+<symbol id="ic-openai" viewBox="0 0 24 24">
+  <g fill="currentColor">
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4"/>
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4" transform="rotate(60 12 12)"/>
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4" transform="rotate(120 12 12)"/>
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4" transform="rotate(180 12 12)"/>
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4" transform="rotate(240 12 12)"/>
+    <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4" transform="rotate(300 12 12)"/>
+  </g>
+</symbol>
+<symbol id="ic-microsoft" viewBox="0 0 24 24">
+  <rect x="2" y="2" width="9" height="9" fill="#F25022"/>
+  <rect x="13" y="2" width="9" height="9" fill="#7FBA00"/>
+  <rect x="2" y="13" width="9" height="9" fill="#00A4EF"/>
+  <rect x="13" y="13" width="9" height="9" fill="#FFB900"/>
+</symbol>
+<symbol id="ic-meta" viewBox="0 0 24 24">
+  <path fill="url(#metagrad)" d="M6.5 4C3 4 1 7.8 1 12c0 3.7 1.6 8 4.6 8 2.1 0 3.4-1.5 5.4-4.9 0 0 .8-1.4 1.4-2.4.3.5.6 1 1 1.6l1.6 2.6c1.8 2.9 3 3.1 4.7 3.1 2.9 0 4.3-2.4 4.3-5.6 0-4.6-2.3-9.4-5.6-9.4-1.9 0-3.4 1.4-5.3 4.4C10.7 6.2 9.2 4 6.5 4z"/>
+  <defs><linearGradient id="metagrad" x1="1" y1="4" x2="23" y2="20"><stop offset="0" stop-color="#0081FB"/><stop offset="1" stop-color="#0064E0"/></linearGradient></defs>
+</symbol>
+<symbol id="ic-linkedin" viewBox="0 0 24 24">
+  <rect width="24" height="24" rx="4.5" fill="#0A66C2"/>
+  <path fill="#fff" d="M7.2 9.8h2.6V18H7.2zM8.5 5.9a1.55 1.55 0 110 3.1 1.55 1.55 0 010-3.1zM11.3 9.8h2.5v1.1h.03c.35-.63 1.2-1.3 2.47-1.3 2.64 0 3.13 1.7 3.13 3.9V18h-2.6v-3.9c0-.93-.02-2.13-1.3-2.13-1.3 0-1.5 1-1.5 2.06V18h-2.6z"/>
+</symbol>
+<symbol id="ic-instagram" viewBox="0 0 24 24">
+  <rect width="24" height="24" rx="6" fill="url(#igrad)"/>
+  <rect x="6" y="6" width="12" height="12" rx="4" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="16.2" cy="7.8" r="1" fill="#fff"/>
+  <defs><radialGradient id="igrad" cx="0.3" cy="1" r="1.2"><stop offset="0" stop-color="#FED576"/><stop offset="0.35" stop-color="#F47133"/><stop offset="0.6" stop-color="#BC3081"/><stop offset="1" stop-color="#4F5BD5"/></radialGradient></defs>
+</symbol>
+<symbol id="ic-globe" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <ellipse cx="12" cy="12" rx="4" ry="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <path d="M2.5 8.5h19M2.5 15.5h19" fill="none" stroke="currentColor" stroke-width="1.6"/>
+</symbol>
+<!-- QR codes — generated at authoring time with the `qrcode` package (pnpm),
+     baked in as static SVG paths so the deck stays a single offline file
+     with zero runtime dependencies. Same URLs as each social-card's href. -->
+<symbol id="qr-linkedin" viewBox="0 0 33 33">
+  <path stroke="#141019" d="M0 0.5h7m2 0h1m2 0h2m2 0h5m2 0h1m2 0h7M0 1.5h1m5 0h1m2 0h9m6 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m1 0h1m3 0h3m4 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m1 0h1m2 0h2m1 0h3m2 0h3m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m2 0h2m1 0h1m2 0h3m2 0h1m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h8m2 0h1m4 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h2m1 0h1m4 0h1m3 0h3M0 8.5h1m1 0h5m2 0h1m1 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h5M3 9.5h1m1 0h1m1 0h2m1 0h1m1 0h1m3 0h4m1 0h1m1 0h1m2 0h2m1 0h4M0 10.5h5m1 0h2m1 0h3m3 0h2m4 0h1m2 0h3m1 0h1m1 0h2M1 11.5h1m2 0h1m3 0h1m1 0h2m2 0h1m1 0h1m2 0h5m2 0h1m1 0h4M3 12.5h2m1 0h1m3 0h2m5 0h1m1 0h1m2 0h4m1 0h3m1 0h1M0 13.5h2m2 0h2m2 0h1m4 0h2m2 0h4m1 0h3m1 0h1m3 0h3M0 14.5h3m2 0h2m2 0h1m3 0h1m1 0h3m4 0h1m2 0h5m1 0h1M1 15.5h2m1 0h1m4 0h3m3 0h1m4 0h2m1 0h1m1 0h3m2 0h1M1 16.5h1m2 0h4m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m2 0h4m1 0h2m3 0h1M1 17.5h1m3 0h1m1 0h1m3 0h1m6 0h4m1 0h5m1 0h2m1 0h1M0 18.5h1m3 0h1m1 0h3m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m6 0h2m1 0h2M1 19.5h1m1 0h1m3 0h2m1 0h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m1 0h4m1 0h1M0 20.5h1m1 0h1m3 0h2m9 0h1m1 0h1m2 0h1m1 0h2m2 0h2M0 21.5h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m2 0h1m2 0h1m2 0h1m2 0h1M0 22.5h1m2 0h1m2 0h1m2 0h2m1 0h1m1 0h2m4 0h1m3 0h2m3 0h3M0 23.5h1m1 0h1m1 0h2m5 0h1m2 0h3m4 0h2m2 0h2m2 0h2M0 24.5h1m1 0h3m1 0h1m1 0h1m3 0h1m4 0h3m2 0h1m1 0h5m2 0h2M8 25.5h5m3 0h1m1 0h4m1 0h2m3 0h1m1 0h3M0 26.5h7m2 0h4m2 0h3m3 0h1m1 0h2m1 0h1m1 0h1m1 0h2M0 27.5h1m5 0h1m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m1 0h5m3 0h3M0 28.5h1m1 0h3m1 0h1m1 0h6m3 0h1m4 0h1m1 0h6m1 0h1M0 29.5h1m1 0h3m1 0h1m1 0h4m1 0h2m1 0h6m1 0h1m1 0h1m2 0h5M0 30.5h1m1 0h3m1 0h1m1 0h5m2 0h3m2 0h8M0 31.5h1m5 0h1m3 0h1m4 0h1m4 0h3m2 0h2m1 0h3M0 32.5h7m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h2m3 0h1"/>
+</symbol>
+<symbol id="qr-github" viewBox="0 0 25 25">
+  <path stroke="#141019" d="M0 0.5h7m1 0h1m3 0h1m1 0h1m3 0h7M0 1.5h1m5 0h1m3 0h1m1 0h1m1 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m1 0h1m4 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m2 0h2m2 0h1m1 0h1m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m2 0h1m4 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m2 0h3m1 0h1m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M9 7.5h3m2 0h2M0 8.5h1m1 0h1m3 0h2m4 0h2m1 0h2m2 0h1m2 0h1m1 0h1M0 9.5h1m1 0h1m5 0h3m3 0h3m1 0h2m1 0h1m1 0h2M1 10.5h1m2 0h1m1 0h1m2 0h2m1 0h1m1 0h4m3 0h2m1 0h1M4 11.5h1m7 0h1m1 0h4m1 0h1m1 0h1M0 12.5h4m1 0h2m9 0h1m1 0h2m4 0h1M1 13.5h2m1 0h2m1 0h4m3 0h2m1 0h3m3 0h2M0 14.5h2m1 0h1m2 0h1m2 0h3m2 0h3m1 0h1m2 0h2m1 0h1M2 15.5h4m2 0h3m4 0h1m3 0h3M0 16.5h2m2 0h1m1 0h2m2 0h4m1 0h6m2 0h1M8 17.5h1m1 0h1m1 0h1m1 0h1m3 0h1m3 0h1M0 18.5h7m1 0h3m1 0h3m1 0h1m1 0h1m3 0h1M0 19.5h1m5 0h1m2 0h4m2 0h2m3 0h1M0 20.5h1m1 0h3m1 0h1m3 0h1m1 0h1m2 0h6m2 0h1M0 21.5h1m1 0h3m1 0h1m2 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2M0 22.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m1 0h2m1 0h3m1 0h2M0 23.5h1m5 0h1m2 0h4m1 0h3m1 0h3M0 24.5h7m1 0h1m3 0h1m3 0h3m2 0h1m2 0h1"/>
+</symbol>
+<symbol id="qr-portfolio" viewBox="0 0 29 29">
+  <path stroke="#141019" d="M0 0.5h7m1 0h1m1 0h1m1 0h4m1 0h4m1 0h7M0 1.5h1m5 0h1m1 0h3m1 0h2m2 0h3m1 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m2 0h1m1 0h1m4 0h1m2 0h2m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m3 0h1m3 0h1m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m2 0h1m1 0h1m1 0h1m1 0h6m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h2m1 0h1m3 0h4m1 0h1M0 8.5h1m1 0h2m1 0h3m1 0h2m1 0h2m1 0h3m4 0h1m2 0h1m1 0h2M0 9.5h1m1 0h3m3 0h1m1 0h1m1 0h4m1 0h8m3 0h1M1 10.5h4m1 0h1m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m1 0h2m1 0h2M0 11.5h1m1 0h1m2 0h1m3 0h1m1 0h2m2 0h1m3 0h4m5 0h1M0 12.5h1m2 0h1m1 0h3m3 0h1m2 0h1m2 0h1m1 0h1m3 0h1m1 0h2M1 13.5h1m1 0h1m3 0h2m5 0h2m3 0h1m1 0h2m3 0h3M0 14.5h1m1 0h1m1 0h1m1 0h3m2 0h3m2 0h1m2 0h2m1 0h1m3 0h3M0 15.5h2m1 0h3m4 0h1m3 0h1m1 0h1m5 0h3m2 0h1M0 16.5h2m1 0h1m2 0h1m7 0h1m1 0h1m1 0h1m1 0h1m2 0h3m1 0h1M4 17.5h2m2 0h3m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m1 0h3M0 18.5h1m2 0h1m2 0h2m1 0h1m1 0h8m3 0h1m3 0h1M2 19.5h4m1 0h1m3 0h4m1 0h6m2 0h1m1 0h1M1 20.5h1m4 0h1m1 0h1m1 0h5m1 0h2m1 0h8M8 21.5h1m1 0h1m1 0h1m3 0h5m3 0h5M0 22.5h7m1 0h2m2 0h1m1 0h1m2 0h4m1 0h1m1 0h2m1 0h1M0 23.5h1m5 0h1m1 0h1m1 0h2m1 0h2m3 0h1m1 0h1m3 0h2M0 24.5h1m1 0h3m1 0h1m2 0h4m2 0h1m1 0h1m2 0h5m1 0h2M0 25.5h1m1 0h3m1 0h1m1 0h3m4 0h3m1 0h3m1 0h3m2 0h1M0 26.5h1m1 0h3m1 0h1m1 0h1m4 0h2m1 0h1m2 0h1m3 0h1m2 0h1m1 0h1M0 27.5h1m5 0h1m4 0h4m1 0h1m3 0h6m1 0h1M0 28.5h7m1 0h1m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m3 0h1"/>
+</symbol>
+<symbol id="qr-instagram" viewBox="0 0 33 33">
+  <path stroke="#141019" d="M0 0.5h7m2 0h1m1 0h3m2 0h4m3 0h1m2 0h7M0 1.5h1m5 0h1m3 0h1m2 0h3m1 0h1m2 0h1m1 0h1m3 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h6m3 0h2m1 0h1m3 0h1m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m1 0h1m2 0h3m2 0h6m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m1 0h2m3 0h1m1 0h2m5 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h3m1 0h1m2 0h3m2 0h1m1 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m1 0h2m2 0h2m2 0h1m2 0h1m1 0h1M0 8.5h1m1 0h5m6 0h5m4 0h3m1 0h5M3 9.5h2m3 0h4m4 0h1m1 0h6m2 0h2m1 0h2m1 0h1M0 10.5h1m1 0h8m1 0h1m3 0h2m1 0h1m1 0h2m2 0h2m2 0h1m1 0h2M0 11.5h1m2 0h1m1 0h1m1 0h5m2 0h2m5 0h3m4 0h3M4 12.5h1m1 0h1m3 0h1m1 0h1m2 0h1m2 0h1m2 0h1m1 0h3m1 0h3m1 0h2M0 13.5h1m1 0h1m2 0h1m3 0h2m1 0h1m1 0h3m3 0h7m2 0h1m1 0h2M1 14.5h6m1 0h2m2 0h1m1 0h1m2 0h3m5 0h4m1 0h2M0 15.5h2m1 0h1m5 0h1m3 0h1m2 0h1m2 0h8m1 0h3M0 16.5h1m2 0h1m2 0h2m1 0h1m1 0h1m1 0h1m3 0h1m1 0h1m2 0h1m1 0h2m1 0h2m3 0h1M2 17.5h2m1 0h1m3 0h2m1 0h2m2 0h5m1 0h6m1 0h2m1 0h1M0 18.5h1m3 0h3m4 0h2m1 0h2m1 0h1m4 0h1m4 0h2m1 0h2M0 19.5h1m4 0h1m4 0h3m4 0h3m3 0h1m2 0h6M0 20.5h1m3 0h1m1 0h4m1 0h1m4 0h1m3 0h3m2 0h1m1 0h3m2 0h1M0 21.5h6m3 0h5m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m2 0h1m2 0h1M0 22.5h1m1 0h1m2 0h4m2 0h1m1 0h5m2 0h3m2 0h1m3 0h1m1 0h1M0 23.5h1m1 0h1m4 0h2m1 0h6m5 0h1m1 0h5m2 0h1M0 24.5h1m2 0h1m2 0h3m1 0h3m2 0h1m1 0h1m2 0h1m1 0h1m1 0h5m2 0h2M8 25.5h1m2 0h2m1 0h1m1 0h1m1 0h4m1 0h2m3 0h1m1 0h1m1 0h1M0 26.5h7m2 0h1m2 0h5m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h2M0 27.5h1m5 0h1m1 0h1m2 0h1m4 0h1m2 0h6m3 0h4M0 28.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m5 0h1m2 0h1m2 0h6m1 0h2M0 29.5h1m1 0h3m1 0h1m1 0h3m1 0h1m2 0h3m2 0h4m1 0h1m2 0h2m2 0h1M0 30.5h1m1 0h3m1 0h1m1 0h7m4 0h1m1 0h1m1 0h5M0 31.5h1m5 0h1m3 0h2m1 0h2m1 0h1m2 0h5m1 0h1m2 0h3M0 32.5h7m1 0h2m3 0h1m3 0h3m2 0h4m1 0h1m3 0h1"/>
+</symbol>
+</defs>
+</svg>
+
+<div class="deck-viewport" id="viewport">
+  <main class="deck-stage" id="deckStage">
+
+    <!-- ============================================================
+         SLIDE 01 — COVER
+         ============================================================ -->
+    <section class="slide title-slide active" data-num="01">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="deck-title-tag">Charla <b>·</b> En vivo</div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; display:flex; flex-direction:column; justify-content:center; padding:0 100px;">
+          <div class="blockmark" style="color:var(--accent); margin-bottom:36px;"><span></span><span></span><span></span><span></span></div>
+          <div class="eyebrow"><span class="dot"></span>IA · DESARROLLO · MVP</div>
+          <h1 class="display" style="margin-top:28px; font-size:calc(132px * var(--text-scale));">Vibe Coding<br>con <em class="hi">Google</em></h1>
+          <p class="body" style="margin-top:36px; max-width:1150px; color:var(--muted); font-size:calc(30px * var(--text-scale));">De la idea al <mark class="hi">MVP</mark> en tiempo récord — un flujo práctico con herramientas de IA (de Google y de todo el ecosistema).</p>
+          <div style="margin-top:56px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <div class="label" style="opacity:1; color:var(--text-2);">Andrés Jaramillo — Ingeniero de Sistemas / Frontend Developer</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum invert">01 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 02 — BIENVENIDA
+         ============================================================ -->
+    <section class="slide" data-num="02">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/8; grid-row:1/9; padding:64px 72px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>Antes de empezar</div>
+          <h2 class="subtitle" style="margin-top:22px; font-size:calc(60px * var(--text-scale));">Más que <em class="hi">Google</em></h2>
+          <p class="body" style="margin-top:28px; color:var(--muted);">Aunque el título menciona a Google, hoy recorreremos un panorama más amplio: muchas empresas le están apostando fuerte a la IA, así que hablaremos de herramientas de varios jugadores importantes del ecosistema.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:8/13; grid-row:1/9; padding:44px; display:flex; flex-direction:column; justify-content:center; gap:26px;">
+          <div>
+            <div class="label" style="color:var(--accent-text); opacity:0.8;">Hoy en el ecosistema</div>
+            <p style="font-family:var(--font-display); font-weight:700; font-size:calc(26px * var(--text-scale)); line-height:1.25; margin-top:14px; text-transform:uppercase;">No solo Google le apuesta a la IA</p>
+          </div>
+          <div class="tool-row">
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-google"/></svg></span>Google</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-openai"/></svg></span>OpenAI</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-microsoft"/></svg></span>Microsoft</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-meta"/></svg></span>Meta</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-claude"/></svg></span>Anthropic</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-github"/></svg></span>GitHub</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-cursor"/></svg></span>Cursor</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">02 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 03 — BIO PONENTE
+         ============================================================ -->
+    <section class="slide" data-num="03">
+      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal photo-panel" style="grid-column:1/5; grid-row:1/9;">
+          <div class="photo-portrait"><img src="imgs/yo.png" alt="Andrés Jaramillo"></div>
+          <div class="photo-scrim"></div>
+          <div class="blockmark photo-mark" style="color:var(--accent);"><span></span><span></span><span></span><span></span></div>
+          <div class="photo-caption">
+            <h3 class="card-h" style="color:var(--text-2); font-size:calc(40px * var(--text-scale));">Andrés<br>Jaramillo</h3>
+            <div class="label" style="margin-top:14px; color:var(--text-2);">Ingeniero de Sistemas</div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 72px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>El ponente</div>
+          <p class="body" style="margin-top:26px; font-size:calc(29px * var(--text-scale)); max-width:1200px;">Desarrollador <mark class="hi">Frontend</mark> con más de 5 años diseñando y construyendo interfaces y experiencias digitales.</p>
+          <p class="body" style="margin-top:20px; font-size:calc(26px * var(--text-scale)); color:var(--muted); max-width:1200px;">Apasionado del diseño gráfico, el arte digital y el UX/UI. Fuera del código, fanático confeso de la cultura pop — así que si se me escapa una referencia de película, videojuego o cómic, ya saben de dónde viene.</p>
+        </div>
+      </div>
+      <div class="pagenum">03 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 04 — SECTION DIVIDER: CONCEPTOS CLAVE
+         ============================================================ -->
+    <section class="slide section-divider" data-num="04">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:calc(280px * var(--text-scale)); line-height:0.85; letter-spacing:-0.04em;">00</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--text-2);">Antes de arrancar</div>
+          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(96px * var(--text-scale));">Conceptos<br>Clave</h1>
+          <p class="body" style="margin-top:24px; color:var(--muted); max-width:900px;">Un pequeño glosario para que todos hablemos el mismo idioma durante la charla.</p>
+        </div>
+      </div>
+      <div class="pagenum invert">04 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 05 — CONCEPTOS CLAVE (1/2)
+         ============================================================ -->
+    <section class="slide" data-num="05">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Glosario · Parte 1 de 2</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/4; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">LLM</div>
+          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(26px * var(--text-scale));">Large Language Model</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--text-2); opacity:0.8;">Modelo de IA entrenado con grandes cantidades de texto para entender y generar lenguaje, responder preguntas y escribir código.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:4/7; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">MCP</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Model Context Protocol</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Protocolo que permite a una IA conectarse de forma estandarizada con herramientas, APIs y bases de datos.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:7/10; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">Skills</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Instrucciones reutilizables</h3>
+          <p class="body-sm" style="margin-top:16px; opacity:0.85;">Enseñan a la IA cómo realizar una tarea específica de manera consistente.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:10/13; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">CLI</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Command Line Interface</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Interfaz para interactuar con un programa mediante comandos escritos en la terminal.</p>
+        </div>
+      </div>
+      <div class="pagenum">05 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 06 — CONCEPTOS CLAVE (2/2)
+         ============================================================ -->
+    <section class="slide" data-num="06">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Glosario · Parte 2 de 2</div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/4; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">Plugins</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Extensiones de IA</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Agregan nuevas funciones o integraciones a una herramienta de IA.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:4/7; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">SRS</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Software Requirements Spec.</h3>
+          <p class="body-sm" style="margin-top:16px; opacity:0.85;">Documento que define los requisitos funcionales y no funcionales del software.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:7/10; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">PRD</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Product Requirements Doc.</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Describe qué producto se va a construir, para quién y qué problema resuelve.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:10/13; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
+          <div class="label" style="color:var(--accent);">Arquitectura</div>
+          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(24px * var(--text-scale));">Documento Técnico</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--text-2); opacity:0.8;">Explica cómo se implementará el sistema: tecnologías, componentes y decisiones técnicas.</p>
+        </div>
+      </div>
+      <div class="pagenum">06 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 07 — SECTION DIVIDER: LA NUEVA REALIDAD
+         ============================================================ -->
+    <section class="slide section-divider" data-num="07">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Introducción</div>
+          <h1 class="display" style="margin-top:24px; color:var(--text-2);">La Nueva Realidad<br>del <em class="hi">Desarrollo</em></h1>
+          <p class="body" style="margin-top:28px; color:var(--muted); max-width:1000px; font-size:calc(28px * var(--text-scale));">Ya no es una promesa futurista. Es la forma en que ya estamos construyendo software.</p>
+        </div>
+      </div>
+      <div class="pagenum invert">07 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 08 — STAT: 90% USAN IA (RADIAL CHART)
+         ============================================================ -->
+    <section class="slide" data-num="08">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>Adopción real, hoy</div>
+          <h2 class="subtitle" style="margin-top:24px; font-size:calc(52px * var(--text-scale));">La IA ya es<br>parte del <em class="hi">día a día</em></h2>
+          <p class="body" style="margin-top:24px; color:var(--muted);">Los agentes de IA hoy implementan funcionalidades completas, generan pruebas, refactorizan código y proponen cambios a producción — bajo supervisión humana.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:6/13; grid-row:1/9;">
+          <div class="radial-wrap">
+            <div class="radial-ring">
+              <svg viewBox="0 0 300 300">
+                <circle class="radial-track" cx="150" cy="150" r="130" stroke-dasharray="816.8" stroke-dashoffset="0"/>
+                <circle class="radial-fill" cx="150" cy="150" r="130" style="--offset:81.6;" stroke-dasharray="816.8" stroke-dashoffset="816.8"/>
+              </svg>
+              <div class="radial-label">
+                <div class="n" style="color:var(--text-2);">90<span class="stat-unit">%</span></div>
+              </div>
+            </div>
+            <div class="radial-caption" style="color:var(--text-2); opacity:0.65;">de developers usan IA a diario</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">08 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 09 — EVOLUCIÓN DE LA IA EN EL EDITOR (TIMELINE)
+         ============================================================ -->
+    <section class="slide" data-num="09">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
+          <div class="eyebrow"><span class="dot"></span>La evolución del flujo de trabajo</div>
+          <div class="label">Autocompletado → Agentes</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:40px; display:flex; flex-direction:column;">
+          <div class="stage-illo" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-2);">
+            <svg viewBox="0 0 220 140" style="width:100%; height:100%; max-height:200px;">
+              <rect x="4" y="4" width="212" height="132" fill="none" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+              <rect x="20" y="26" width="90" height="10" rx="1" fill="currentColor" opacity="0.55"/>
+              <rect x="20" y="48" width="130" height="10" rx="1" fill="currentColor" opacity="0.35"/>
+              <rect x="20" y="70" width="70" height="10" rx="1" fill="currentColor" opacity="0.55"/>
+              <rect x="20" y="92" width="60" height="10" rx="1" fill="var(--accent)"/>
+              <rect x="84" y="92" width="96" height="10" rx="1" fill="var(--accent)" opacity="0.28" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 4"/>
+              <rect x="80" y="91" width="2.5" height="12" fill="var(--accent)"><animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/></rect>
+            </svg>
+          </div>
+          <div class="flow-num" style="color:var(--accent);">01</div>
+          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(28px * var(--text-scale));">Autocompletado</h3>
+          <p class="body-sm" style="margin-top:12px; color:var(--text-2); opacity:0.75;">La IA sugería líneas sueltas o completaba funciones.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:40px; display:flex; flex-direction:column;">
+          <div class="stage-illo" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-1);">
+            <svg viewBox="0 0 220 140" style="width:100%; height:100%; max-height:200px;">
+              <rect x="4" y="4" width="100" height="132" fill="none" stroke="currentColor" stroke-width="2" opacity="0.22"/>
+              <rect x="16" y="20" width="70" height="8" rx="1" fill="currentColor" opacity="0.4"/>
+              <rect x="16" y="38" width="50" height="8" rx="1" fill="currentColor" opacity="0.4"/>
+              <rect x="16" y="56" width="60" height="8" rx="1" fill="currentColor" opacity="0.4"/>
+              <path d="M118 18h84a8 8 0 018 8v22a8 8 0 01-8 8h-58l-14 12v-12h-12a8 8 0 01-8-8V26a8 8 0 018-8z" fill="var(--muted)" opacity="0.28"/>
+              <circle cx="132" cy="42" r="3" fill="currentColor"/><circle cx="146" cy="42" r="3" fill="currentColor"/><circle cx="160" cy="42" r="3" fill="currentColor"/>
+              <path d="M126 78h72a8 8 0 018 8v20a8 8 0 01-8 8h-10v12l-16-12h-46a8 8 0 01-8-8V86a8 8 0 018-8z" fill="var(--accent)" opacity="0.9"/>
+              <circle cx="140" cy="100" r="3" fill="var(--accent-text)"/><circle cx="154" cy="100" r="3" fill="var(--accent-text)"/><circle cx="168" cy="100" r="3" fill="var(--accent-text)"/>
+            </svg>
+          </div>
+          <div class="flow-num">02</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Asistentes conversacionales</h3>
+          <p class="body-sm" style="margin-top:12px; color:var(--muted);">Chat dentro del editor para resolver errores o implementar pequeñas funciones.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/9; padding:40px; display:flex; flex-direction:column;">
+          <div class="stage-illo" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--accent-text);">
+            <svg viewBox="0 0 220 140" style="width:100%; height:100%; max-height:200px;">
+              <path d="M24 100L82 55L140 90L196 55" stroke="currentColor" stroke-width="2.5" opacity="0.55" fill="none"/>
+              <circle cx="24" cy="100" r="13" fill="var(--accent-text)" opacity="0.85"/>
+              <circle cx="82" cy="55" r="13" fill="var(--accent-text)" opacity="0.85"/>
+              <circle cx="140" cy="90" r="13" fill="var(--accent-text)" opacity="0.85"/>
+              <circle cx="196" cy="55" r="18" fill="var(--accent-text)"/>
+              <path d="M187 55l6 6 12-13" stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="flow-num" style="color:var(--accent-text);">03</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Agentes autónomos</h3>
+          <p class="body-sm" style="margin-top:12px; opacity:0.85;">Cursor, Claude Code, Gemini CLI: implementan features completas, corren tests y proponen soluciones integrales.</p>
+        </div>
+      </div>
+      <div class="pagenum">09 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 10 — STAT: +55% VELOCIDAD / 90% SATISFACCIÓN
+         ============================================================ -->
+    <section class="slide" data-num="10">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>El dato detrás del hype</div>
+          <h2 class="subtitle" style="margin-top:24px; font-size:calc(46px * var(--text-scale));">No es solo<br>velocidad</h2>
+          <p class="body" style="margin-top:22px; color:var(--muted);">GitHub Copilot acelera ciertas tareas de programación hasta en un <mark class="hi">55%</mark>, liberando tiempo para arquitectura y colaboración. El <mark class="hi">90%</mark> de quienes usan estas herramientas reportan mayor satisfacción laboral.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:6/13; grid-row:1/9; padding:56px;">
+          <div class="bars" style="height:78%;">
+            <div class="bar-col">
+              <div class="bar-num" style="color:var(--text-2);">55%</div>
+              <div class="bar-track"><div class="bar-fill" style="--h:55%;"></div></div>
+              <div class="bar-name" style="color:var(--text-2);">Velocidad<br>(Copilot)</div>
+            </div>
+            <div class="bar-col">
+              <div class="bar-num" style="color:var(--text-2);">90%</div>
+              <div class="bar-track"><div class="bar-fill b" style="--h:90%;"></div></div>
+              <div class="bar-name" style="color:var(--text-2);">Satisfacción<br>laboral</div>
+            </div>
+            <div class="bar-col">
+              <div class="bar-num" style="color:var(--text-2);">90%</div>
+              <div class="bar-track"><div class="bar-fill" style="--h:90%;"></div></div>
+              <div class="bar-name" style="color:var(--text-2);">Adopción<br>diaria de IA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum invert">10 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 11 — VIBE CODING RESPONSABLE
+         ============================================================ -->
+    <section class="slide" data-num="11">
+      <div class="parallax-orbs"><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:88px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">El concepto central de hoy</div>
+          <h1 class="display" style="margin-top:26px; font-size:calc(104px * var(--text-scale)); max-width:1500px;">Vibe Coding <em style="color:var(--accent-text); font-style:normal; text-decoration:underline; text-decoration-thickness:6px;">Responsable</em></h1>
+          <p class="body" style="margin-top:32px; font-size:calc(30px * var(--text-scale)); max-width:1300px; opacity:0.9;">Aprovechar la velocidad y creatividad de los agentes de IA sin renunciar al pensamiento crítico: buena arquitectura, restricciones claras, validación de resultados, seguridad y mantenibilidad.</p>
+        </div>
+      </div>
+      <div class="pagenum accent">11 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 12 — ANALOGÍA: ARQUITECTO Y EQUIPO CONSTRUCTOR
+         ============================================================ -->
+    <section class="slide" data-num="12">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>La mejor analogía</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/7; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">La IA</div>
+          <h3 class="card-h" style="margin-top:16px; color:var(--text-2); font-size:calc(38px * var(--text-scale));">Un equipo constructor extraordinariamente rápido</h3>
+          <p class="body-sm" style="margin-top:18px; color:var(--text-2); opacity:0.8;">Capaz de construir gran parte de la solución en minutos.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:7/13; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">El desarrollador</div>
+          <h3 class="card-h" style="margin-top:16px; font-size:calc(38px * var(--text-scale));">El arquitecto que dirige el proyecto</h3>
+          <p class="body-sm" style="margin-top:18px; opacity:0.85;">Comprende el problema, define el diseño, establece las reglas, supervisa la ejecución y decide cuándo el trabajo cumple los objetivos.</p>
+        </div>
+      </div>
+      <div class="pagenum">12 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 13 — EL VALOR DEL DESARROLLADOR
+         ============================================================ -->
+    <section class="slide" data-num="13">
+      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/9; padding:90px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>Para cerrar la introducción</div>
+          <h2 class="subtitle" style="margin-top:26px; font-size:calc(58px * var(--text-scale)); max-width:1500px;">El valor ya no está en <em class="hi">escribir código</em>,<br>sino en aportar <mark class="hi">criterio, contexto y visión</mark></h2>
+          <p class="body" style="margin-top:30px; color:var(--muted); max-width:1200px; font-size:calc(28px * var(--text-scale));">La IA acelera la construcción del software. La responsabilidad sobre lo que construimos —y por qué— sigue siendo completamente humana.</p>
+        </div>
+      </div>
+      <div class="pagenum">13 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 14 — SECTION DIVIDER: BLOQUE 1
+         ============================================================ -->
+    <section class="slide section-divider" data-num="14">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:calc(280px * var(--text-scale)); line-height:0.85; letter-spacing:-0.04em;">01</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--text-2);">Bloque 1</div>
+          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(78px * var(--text-scale));">Investigación y Aprendizaje<br>de Alto Impacto</h1>
+        </div>
+      </div>
+      <div class="pagenum invert">14 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 15 — NOTEBOOKLM: VENCIENDO LAS ALUCINACIONES
+         ============================================================ -->
+    <section class="slide" data-num="15">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">El miedo</div>
+          <h3 class="card-h" style="margin-top:16px; color:var(--text-2); font-size:calc(40px * var(--text-scale));">La alucinación</h3>
+          <p class="body" style="margin-top:20px; color:var(--text-2); opacity:0.8;">Que el modelo invente datos obsoletos o directamente incorrectos.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:6/13; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">La solución</div>
+          <h3 class="card-h" style="margin-top:16px; font-size:calc(44px * var(--text-scale));">NotebookLM</h3>
+          <p class="body" style="margin-top:20px; opacity:0.85; max-width:900px;">Tomamos el control total de las fuentes de información — la IA solo responde con base en lo que nosotros le entregamos.</p>
+        </div>
+      </div>
+      <div class="pagenum invert">15 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 16 — NOTEBOOKLM: FUENTES Y RESULTADOS VERIFICABLES
+         ============================================================ -->
+    <section class="slide" data-num="16">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="tool-badge" style="border:none; background:none; padding:0;">
+            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-book"/></svg></div>
+            <div class="tx"><div class="nm">NotebookLM</div></div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/7; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Fuentes confiables</div>
+          <p class="body" style="margin-top:18px; font-size:calc(27px * var(--text-scale));">Documentación oficial (MDN, Python.org), videos de YouTube o archivos PDF locales.</p>
+          <div class="tool-row" style="margin-top:26px;">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-docs"/></svg></span>MDN</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-python"/></svg></span>Python.org</div>
+          </div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:7/13; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Resultados verificables</div>
+          <p class="body" style="margin-top:18px; color:var(--text-2); font-size:calc(27px * var(--text-scale)); opacity:0.85;">Citas directas que llevan al segundo exacto de un video o al párrafo de un documento — eliminando la incertidumbre.</p>
+        </div>
+      </div>
+      <div class="pagenum">16 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 17 — PROMPT ENGINEERING + DEEP RESEARCH
+         ============================================================ -->
+    <section class="slide" data-num="17">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow"><span class="dot"></span>Ingeniería de prompts</div>
+          <h3 class="card-h" style="margin-top:18px; font-size:calc(36px * var(--text-scale));">De la "frase mágica" a un proceso iterativo</h3>
+          <p class="body-sm" style="margin-top:16px; color:var(--muted);">El prompting pasó de buscar una fórmula perfecta a ser un proceso estratégico y repetible.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:6/13; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">Deep Research</div>
+          <h3 class="card-h" style="margin-top:16px; font-size:calc(40px * var(--text-scale));">Semanas de análisis → minutos</h3>
+          <p class="body" style="margin-top:18px; opacity:0.85; max-width:950px;">Con modelos razonadores, analizamos repositorios complejos de GitHub y obtenemos un informe técnico: puntos de entrada, dependencias críticas y "hotspots" de complejidad.</p>
+          <div class="tool-row" style="margin-top:24px;">
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-github"/></svg></span>GitHub</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum accent">17 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 18 — SECTION DIVIDER: BLOQUE 2
+         ============================================================ -->
+    <section class="slide section-divider" data-num="18">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:calc(280px * var(--text-scale)); line-height:0.85; letter-spacing:-0.04em;">02</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--text-2);">Bloque 2</div>
+          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(76px * var(--text-scale));">Transformando el Ciclo<br>de Vida del Desarrollo</h1>
+        </div>
+      </div>
+      <div class="pagenum invert">18 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 19 — DE LA REUNIÓN AL TICKET AUTOMÁTICO
+         ============================================================ -->
+    <section class="slide" data-num="19">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Gestión de requisitos, sin cuello de botella</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/7; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
+            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-gemini"/></svg></div>
+            <div class="tx"><div class="nm" style="color:var(--text-2);">Gemini</div></div>
+          </div>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(32px * var(--text-scale));">Notas de reunión</h3>
+          <p class="body-sm" style="margin-top:14px; color:var(--text-2); opacity:0.8;">Transcribe y resume automáticamente lo discutido con negocio.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:7/13; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <h3 class="card-h" style="font-size:calc(32px * var(--text-scale));">De las notas al ticket</h3>
+          <p class="body-sm" style="margin-top:14px; color:var(--muted);">A partir de las notas, la IA genera Historias de Usuario y Criterios de Aceptación — definiendo sin ambigüedad cuándo una tarea está "terminada".</p>
+        </div>
+      </div>
+      <div class="pagenum">19 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 20 — HISTORIAS DE USUARIO Y GHERKIN
+         ============================================================ -->
+    <section class="slide" data-num="20">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/5; grid-row:1/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Historia de Usuario</div>
+          <p class="body" style="margin-top:18px; font-size:calc(26px * var(--text-scale));">Como <em class="hi">[rol]</em><br>quiero <em class="hi">[acción]</em><br>para <em class="hi">[beneficio]</em></p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:48px; font-family:var(--font-mono); display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent); margin-bottom:20px;">Criterios de aceptación · Gherkin</div>
+          <p style="color:var(--text-2); font-size:calc(26px * var(--text-scale)); line-height:2;"><span style="color:var(--accent);">GIVEN</span> un usuario autenticado<br><span style="color:var(--accent);">WHEN</span> completa el formulario de pago<br><span style="color:var(--accent);">THEN</span> la orden queda confirmada</p>
+        </div>
+      </div>
+      <div class="pagenum invert">20 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 21 — INTEGRACIÓN MCP → LINEAR / JIRA
+         ============================================================ -->
+    <section class="slide" data-num="21">
+      <div class="parallax-orbs"><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; justify-content:space-between;">
+          <h3 class="card-h" style="font-size:calc(34px * var(--text-scale));">Integración con MCP</h3>
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">Ahorra días de trabajo administrativo</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0;">
+            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div>
+            <div class="tx"><div class="nm" style="color:var(--text-2);">Claude Code</div><div class="ds">Agente</div></div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0;">
+            <div class="ic"><svg><use href="#ic-linear"/></svg></div>
+            <div class="tx"><div class="nm">Linear</div><div class="ds">Tickets</div></div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:9/13; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0;">
+            <div class="ic"><svg><use href="#ic-jira"/></svg></div>
+            <div class="tx"><div class="nm">Jira</div><div class="ds">Tickets</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum accent">21 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 22 — TDD GUIADO POR IA (FLOW)
+         ============================================================ -->
+    <section class="slide" data-num="22">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Desarrollo Guiado por TDD con IA</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num" style="color:var(--accent);">01</div>
+          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(28px * var(--text-scale));">Rama aislada</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Se crea en el repositorio.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num">02</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Tests vacíos</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Basados en los criterios de aceptación — empiezan en "rojo".</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num" style="color:var(--accent-text);">03</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Rojo → Verde</h3>
+          <p class="body-sm" style="margin-top:10px; opacity:0.85;">Se implementa el código para que los tests pasen.</p>
+        </div>
+      </div>
+      <div class="pagenum">22 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 23 — EL CONTEXTO ES EL REY
+         ============================================================ -->
+    <section class="slide" data-num="23">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center;">
+          <h2 class="subtitle" style="font-size:calc(44px * var(--text-scale));">El "Contexto" es el <em style="font-style:normal; text-decoration:underline;">Rey</em></h2>
+        </div>
+        <div class="panel reveal" style="grid-column:1/7; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Carpeta de contexto</div>
+          <p class="body" style="margin-top:16px;">Esquemas SQL o documentación técnica para que la IA entienda nuestra base de datos.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:7/13; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">agents.md</div>
+          <p class="body" style="margin-top:16px; color:var(--text-2); opacity:0.85;">Estándar de facto para definir reglas de estilo (ej. snake_case siempre) y las "fuentes de verdad" del proyecto.</p>
+        </div>
+      </div>
+      <div class="pagenum accent">23 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 24 — EXTENDIENDO LA IA: SKILLS, MCP, PLUGINS
+         ============================================================ -->
+    <section class="slide" data-num="24">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Extendiendo la IA en la práctica</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(24px * var(--text-scale));">Skill de Frontend Design</h3>
+          <p class="body-sm" style="margin-top:12px; color:var(--text-2); opacity:0.8;">Skill oficial de anthropics/skills: guía a la IA para construir interfaces consistentes y accesibles.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic"><svg><use href="#ic-docs"/></svg></div></div>
+          <h3 class="card-h" style="font-size:calc(24px * var(--text-scale));">Skill + MCP de Context7</h3>
+          <p class="body-sm" style="margin-top:12px; color:var(--muted);">Inyecta documentación siempre actualizada de librerías, evitando código basado en APIs obsoletas.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic"><svg><use href="#ic-mongodb"/></svg></div></div>
+          <h3 class="card-h" style="font-size:calc(24px * var(--text-scale));">MCP de Base de Datos</h3>
+          <p class="body-sm" style="margin-top:12px; opacity:0.85;">MongoDB MCP: la IA consulta la estructura real de las colecciones y propone queries con precisión.</p>
+        </div>
+      </div>
+      <div class="pagenum">24 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 25 — SECTION DIVIDER: BLOQUE 3
+         ============================================================ -->
+    <section class="slide section-divider" data-num="25">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:calc(280px * var(--text-scale)); line-height:0.85; letter-spacing:-0.04em;">03</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--text-2);">Bloque 3</div>
+          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(70px * var(--text-scale));">Automatización, Prototipado<br>y Seguridad</h1>
+        </div>
+      </div>
+      <div class="pagenum invert">25 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 26 — PROTOTIPADO ULTRA-RÁPIDO Y N8N
+         ============================================================ -->
+    <section class="slide" data-num="26">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/7; grid-row:1/9; padding:52px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
+            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-diamond"/></svg></div>
+            <div class="tx"><div class="nm">Google AI Studio</div></div>
+          </div>
+          <p class="body">De un boceto hecho a mano a una app web funcional (Next.js/Tailwind) desplegada con un clic. La IA destruye el "síndrome de la hoja en blanco".</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:7/13; grid-row:1/9; padding:52px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
+            <div class="ic"><svg><use href="#ic-n8n"/></svg></div>
+            <div class="tx"><div class="nm" style="color:var(--text-2);">n8n</div></div>
+          </div>
+          <p class="body" style="color:var(--text-2); opacity:0.85;">Para flujos más complejos: conecta más de <mark class="hi">500</mark> aplicaciones mediante nodos y triggers.</p>
+        </div>
+      </div>
+      <div class="pagenum">26 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 27 — N8N: CASO DE USO WEB SCRAPING
+         ============================================================ -->
+    <section class="slide" data-num="27">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">Caso de uso · n8n</div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/5; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="flow-num">01</div>
+          <h3 class="card-h" style="margin-top:12px; font-size:calc(26px * var(--text-scale));">Monitorea sitios web</h3>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="flow-num">02</div>
+          <h3 class="card-h" style="margin-top:12px; font-size:calc(26px * var(--text-scale));">Filtra información específica</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Ej. cursos de Python.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:9/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="flow-num" style="color:var(--accent);">03</div>
+          <h3 class="card-h" style="margin-top:12px; color:var(--text-2); font-size:calc(26px * var(--text-scale));">Guarda en base de datos</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8;">Automáticamente, sin intervención manual.</p>
+        </div>
+      </div>
+      <div class="pagenum accent">27 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 28 — FLUJO DISEÑO → DESARROLLO (PIPELINE 5 PASOS)
+         ============================================================ -->
+    <section class="slide" data-num="28">
+      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>De Stitch a un MVP funcional</div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/13; grid-row:2/9; padding:12px 8px;">
+          <div class="flow-row">
+            <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-layers"/></svg></div></div>
+              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">01</div>
+              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Google Stitch</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Genera pantallas de UI desde un prompt de texto.</p>
+            </div>
+            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
+            <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-figma"/></svg></div></div>
+              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">02</div>
+              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Figma (MCP)</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Refina el diseño y sirve de contexto para el editor.</p>
+            </div>
+            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
+            <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-cursor"/></svg></div></div>
+              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">03</div>
+              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Cursor / Antigravity</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Implementan pantallas completas desde el diseño.</p>
+            </div>
+            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
+            <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-supabase"/></svg></div></div>
+              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">04</div>
+              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Supabase / Firebase</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">MCP de backend: tablas, auth y despliegue.</p>
+            </div>
+            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
+            <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-rocket"/></svg></div></div>
+              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">05</div>
+              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Antigravity QA</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Controla el navegador y valida el flujo, sin tests manuales.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">28 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 29 — LA SEGURIDAD NO ES NEGOCIABLE
+         ============================================================ -->
+    <section class="slide" data-num="29">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; gap:24px;">
+          <div class="ic" style="width:56px; height:56px; color:var(--accent);"><svg><use href="#ic-shield"/></svg></div>
+          <h2 class="subtitle" style="color:var(--text-2); font-size:calc(42px * var(--text-scale));">La Seguridad no es Negociable</h2>
+        </div>
+        <div class="panel reveal" style="grid-column:1/7; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Vulnerabilidades comunes</div>
+          <p class="body" style="margin-top:16px;">Credenciales hardcodeadas (ej. "admin/123456") o controles de acceso rotos que exponen URLs internas sin login.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:7/13; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">Nuestro rol</div>
+          <p class="body" style="margin-top:16px; opacity:0.9;">Security by Design y Security by Default: auditar cada sugerencia de la IA, hashing de contraseñas y validaciones robustas en el servidor.</p>
+        </div>
+      </div>
+      <div class="pagenum">29 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 30 — SECTION DIVIDER: CONCLUSIÓN
+         ============================================================ -->
+    <section class="slide section-divider" data-num="30">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">Para cerrar</div>
+          <h1 class="display" style="margin-top:24px; color:var(--text-2);">El Desarrollador<br><em class="hi">Orquesta</em></h1>
+        </div>
+      </div>
+      <div class="pagenum invert">30 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 31 — EL DESARROLLADOR ORQUESTA (MODELOS)
+         ============================================================ -->
+    <section class="slide" data-num="31">
+      <div class="parallax-orbs"><div class="orb o2"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Director de orquesta: el modelo correcto para cada tarea</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(28px * var(--text-scale));">Opus</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Razonamiento profundo.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:5/9; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent-text);"><svg><use href="#ic-claude"/></svg></div></div>
+          <h3 class="card-h" style="font-size:calc(28px * var(--text-scale));">Sonnet</h3>
+          <p class="body-sm" style="margin-top:10px; opacity:0.85;">Referencia versátil, el punto de equilibrio.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:9/13; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic"><svg><use href="#ic-claude"/></svg></div></div>
+          <h3 class="card-h" style="font-size:calc(28px * var(--text-scale));">Haiku</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Tareas rápidas y económicas.</p>
+        </div>
+      </div>
+      <div class="pagenum">31 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 32 — CIERRE / MENSAJE FINAL
+         ============================================================ -->
+    <section class="slide" data-num="32">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:96px; display:flex; flex-direction:column; justify-content:center;">
+          <h1 class="display" style="font-size:calc(88px * var(--text-scale)); max-width:1550px;">La IA es la herramienta más avanzada que hemos tenido para construir.</h1>
+          <p class="body" style="margin-top:34px; font-size:calc(32px * var(--text-scale)); max-width:1300px; opacity:0.9;">Pero el ingenio, la arquitectura y la supervisión crítica siguen siendo — y seguirán siendo — nuestra responsabilidad única.</p>
+        </div>
+      </div>
+      <div class="pagenum accent">32 / 34</div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 33 — FUENTES / GRACIAS
+         ============================================================ -->
+    <section class="slide" data-num="33">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/4; padding:56px 64px; display:flex; flex-direction:column; justify-content:center;">
+          <h2 class="subtitle" style="color:var(--text-2); font-size:calc(64px * var(--text-scale));">Gracias.</h2>
+          <div class="label" style="margin-top:16px; color:var(--accent);">Andrés Jaramillo</div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/13; grid-row:4/9; padding:44px 64px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+          <div class="label" style="color:var(--accent);">Fuentes</div>
+          <p class="body-sm" style="word-break:break-all;">blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025</p>
+          <p class="body-sm" style="word-break:break-all; color:var(--muted);">github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness</p>
+        </div>
+      </div>
+      <div class="pagenum invert">33 / 34</div>
+    </section>
+
+    <section class="slide" data-num="34">
+      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
+          <div class="eyebrow"><span class="dot"></span>Sigamos en contacto</div>
+          <div class="label">Redes &amp; contacto</div>
+        </div>
+
+        <a class="panel ink reveal social-card" href="https://www.linkedin.com/in/andres-fernando-jaramillo-avila/" target="_blank" rel="noopener">
+          <span class="ic" style="width:52px; height:52px;"><svg><use href="#ic-linkedin"/></svg></span>
+          <h3 class="card-h" style="margin-top:22px; color:var(--text-2); font-size:calc(30px * var(--text-scale));">LinkedIn</h3>
+          <div class="body-sm" style="margin-top:8px; color:var(--text-2); opacity:0.7; word-break:break-word;">/in/andres-fernando-jaramillo-avila</div>
+          <div class="qr-tile"><svg viewBox="0 0 33 33"><use href="#qr-linkedin"/></svg></div>
+          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        </a>
+
+        <a class="panel reveal social-card" href="https://github.com/SrPio" target="_blank" rel="noopener">
+          <span class="ic" style="width:52px; height:52px; color:var(--text-1);"><svg><use href="#ic-github"/></svg></span>
+          <h3 class="card-h" style="margin-top:22px; font-size:calc(30px * var(--text-scale));">GitHub</h3>
+          <div class="body-sm" style="margin-top:8px; color:var(--muted);">@SrPio</div>
+          <div class="qr-tile"><svg viewBox="0 0 25 25"><use href="#qr-github"/></svg></div>
+          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        </a>
+
+        <a class="panel accent reveal social-card" href="https://andres-jaramillo.is-a.dev/" target="_blank" rel="noopener">
+          <span class="ic" style="width:52px; height:52px; color:var(--accent-text);"><svg><use href="#ic-globe"/></svg></span>
+          <h3 class="card-h" style="margin-top:22px; color:var(--accent-text); font-size:calc(30px * var(--text-scale));">Portafolio</h3>
+          <div class="body-sm" style="margin-top:8px; color:var(--accent-text); opacity:0.75; word-break:break-word;">andres-jaramillo.is-a.dev</div>
+          <div class="qr-tile"><svg viewBox="0 0 29 29"><use href="#qr-portfolio"/></svg></div>
+          <span class="social-arrow" style="color:var(--accent-text);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        </a>
+
+        <a class="panel ink reveal social-card" href="https://www.instagram.com/jaramillo.andress/" target="_blank" rel="noopener">
+          <span class="ic" style="width:52px; height:52px;"><svg><use href="#ic-instagram"/></svg></span>
+          <h3 class="card-h" style="margin-top:22px; color:var(--text-2); font-size:calc(30px * var(--text-scale));">Instagram</h3>
+          <div class="body-sm" style="margin-top:8px; color:var(--text-2); opacity:0.7;">@jaramillo.andress</div>
+          <div class="qr-tile"><svg viewBox="0 0 33 33"><use href="#qr-instagram"/></svg></div>
+          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        </a>
+      </div>
+      <div class="pagenum invert">34 / 34</div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===========================================
+     DECK CONTROLS (outside the fixed stage)
+     =========================================== -->
+<button class="export-pdf-btn" id="exportPdfBtn" title="Exportar a PDF">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M15 2v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+  Exportar PDF
+</button>
+<button class="theme-toggle" id="themeToggle" title="Cambiar tema (T)">◐</button>
+<div class="text-scale-ctrl" title="Tamaño de texto (- / +)">
+  <button id="textScaleDown" aria-label="Reducir texto">A−</button>
+  <div class="val" id="textScaleVal">100%</div>
+  <button id="textScaleUp" aria-label="Agrandar texto">A+</button>
+</div>
+<div class="progress-tag" id="progressTag">01 / 34</div>
+<div class="nav-hint">← → · Space · Swipe</div>
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Modo edición (E)">✏️</button>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   =========================================== */
+class SlidePresentation{
+    constructor(){
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.total = this.slides.length;
+        this.current = 0;
+        this.stage = document.getElementById('deckStage');
+        this.viewport = document.getElementById('viewport');
+        this.progressTag = document.getElementById('progressTag');
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupParallax();
+        this.setupTheme();
+        this.setupTextScale();
+        this.setupExport();
+        this.setupEdit();
+        this.showSlide(0);
+    }
+    setupStageScale(){
+        const scale = () => {
+            const f = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+            const x = (window.innerWidth - 1920*f)/2;
+            const y = (window.innerHeight - 1080*f)/2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+    showSlide(index){
+        this.current = Math.max(0, Math.min(index, this.total-1));
+        this.slides.forEach((s,i)=>{
+            s.classList.toggle('active', i===this.current);
+            s.classList.toggle('visible', i===this.current);
+        });
+        this.progressTag.textContent = String(this.current+1).padStart(2,'0') + ' / ' + String(this.total).padStart(2,'0');
+    }
+    next(){ this.showSlide(this.current+1); }
+    prev(){ this.showSlide(this.current-1); }
+    setupKeyboardNav(){
+        document.addEventListener('keydown', (e)=>{
+            if(e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+            if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); this.next(); }
+            else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); this.prev(); }
+            else if(e.key==='Home'){ this.showSlide(0); }
+            else if(e.key==='End'){ this.showSlide(this.total-1); }
+            else if(e.key==='t' || e.key==='T'){ this.toggleTheme(); }
+            else if(e.key==='e' || e.key==='E'){ this.toggleEdit(); }
+            else if(e.key==='-' || e.key==='_'){ this.bumpTextScale(-0.05); }
+            else if(e.key==='=' || e.key==='+'){ this.bumpTextScale(0.05); }
+            else if(e.key==='0'){ this.setTextScale(1); }
+        });
+    }
+    setupTouchNav(){
+        let startX=0, startY=0;
+        this.viewport.addEventListener('touchstart',(e)=>{ startX=e.touches[0].clientX; startY=e.touches[0].clientY; }, {passive:true});
+        this.viewport.addEventListener('touchend',(e)=>{
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50){ dx<0 ? this.next() : this.prev(); }
+        }, {passive:true});
+    }
+    setupWheelNav(){
+        let locked = false;
+        this.viewport.addEventListener('wheel', (e)=>{
+            if(locked) return;
+            if(Math.abs(e.deltaY) < 20) return;
+            locked = true;
+            e.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(()=>locked=false, 650);
+        }, {passive:true});
+    }
+    setupParallax(){
+        this.viewport.addEventListener('mousemove', (e)=>{
+            const nx = (e.clientX / window.innerWidth) - 0.5;
+            const ny = (e.clientY / window.innerHeight) - 0.5;
+            const active = this.slides[this.current];
+            if(!active) return;
+            const orbs = active.querySelectorAll('.orb');
+            const factors = [22, -16, 30];
+            orbs.forEach((orb,i)=>{
+                const f = factors[i % factors.length];
+                orb.style.transform = `translate(${nx*f}px, ${ny*f}px)`;
+            });
+        });
+    }
+    setupTheme(){
+        const stored = localStorage.getItem('vibe-charla-theme');
+        if(stored) document.documentElement.setAttribute('data-theme', stored);
+        document.getElementById('themeToggle').addEventListener('click', ()=>this.toggleTheme());
+    }
+    toggleTheme(){
+        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('vibe-charla-theme', next);
+        document.getElementById('themeToggle').textContent = next === 'dark' ? '◐' : '◑';
+    }
+    setupTextScale(){
+        this.textScaleMin = 0.85;
+        this.textScaleMax = 1.3;
+        const stored = parseFloat(localStorage.getItem('vibe-charla-textscale'));
+        this.setTextScale(!isNaN(stored) ? stored : 1, true);
+        document.getElementById('textScaleUp').addEventListener('click', ()=>this.bumpTextScale(0.05));
+        document.getElementById('textScaleDown').addEventListener('click', ()=>this.bumpTextScale(-0.05));
+    }
+    bumpTextScale(delta){
+        const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-scale')) || 1;
+        this.setTextScale(cur + delta);
+    }
+    setTextScale(value, skipSave){
+        const clamped = Math.min(this.textScaleMax, Math.max(this.textScaleMin, Math.round(value*100)/100));
+        document.documentElement.style.setProperty('--text-scale', clamped);
+        const label = document.getElementById('textScaleVal');
+        if(label) label.textContent = Math.round(clamped*100) + '%';
+        if(!skipSave) localStorage.setItem('vibe-charla-textscale', clamped);
+    }
+    setupExport(){
+        // The @media print block (see <style>) forces every .reveal/.frame/.photo-portrait
+        // img/.radial-fill/.bar-fill straight to its finished animation state on ALL slides
+        // (not just the active one) and lays each .slide out as its own landscape page —
+        // so window.print() + "Save as PDF" is all that's needed, no extra libraries.
+        document.getElementById('exportPdfBtn').addEventListener('click', ()=>window.print());
+    }
+    setupEdit(){
+        this.isActive = false;
+        const hotzone = document.getElementById('editHotzone');
+        const toggle = document.getElementById('editToggle');
+        let hideTimeout = null;
+        hotzone.addEventListener('mouseenter', ()=>{ clearTimeout(hideTimeout); toggle.classList.add('show'); });
+        hotzone.addEventListener('mouseleave', ()=>{ hideTimeout = setTimeout(()=>{ if(!this.isActive) toggle.classList.remove('show'); }, 400); });
+        toggle.addEventListener('mouseenter', ()=>clearTimeout(hideTimeout));
+        toggle.addEventListener('mouseleave', ()=>{ hideTimeout = setTimeout(()=>{ if(!this.isActive) toggle.classList.remove('show'); }, 400); });
+        hotzone.addEventListener('click', ()=>this.toggleEdit());
+        toggle.addEventListener('click', ()=>this.toggleEdit());
+        this.restoreEdits();
+    }
+    toggleEdit(){
+        this.isActive = !this.isActive;
+        document.getElementById('editToggle').classList.toggle('active', this.isActive);
+        const editables = this.stage.querySelectorAll('h1, h2, h3, p, .label, .eyebrow, .stat-num, .n.n, .radial-label .n, .radial-caption, .bar-num, .bar-name');
+        editables.forEach(el=>{
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+            if(this.isActive && !el.dataset.editBound){
+                el.dataset.editBound = '1';
+                el.addEventListener('input', ()=>this.saveEdits());
+            }
+        });
+    }
+    saveEdits(){
+        const data = {};
+        this.stage.querySelectorAll('[data-edit-id]').forEach(el=>{ data[el.dataset.editId] = el.innerHTML; });
+        this.stage.querySelectorAll('h1, h2, h3, p, .label, .eyebrow').forEach((el,i)=>{
+            if(!el.dataset.editId) el.dataset.editId = 'el-'+i;
+            data[el.dataset.editId] = el.innerHTML;
+        });
+        localStorage.setItem('vibe-charla-edits', JSON.stringify(data));
+    }
+    restoreEdits(){
+        const raw = localStorage.getItem('vibe-charla-edits');
+        if(!raw) return;
+        try{
+            const data = JSON.parse(raw);
+            this.stage.querySelectorAll('h1, h2, h3, p, .label, .eyebrow').forEach((el,i)=>{
+                const id = 'el-'+i;
+                if(data[id] !== undefined){ el.dataset.editId = id; el.innerHTML = data[id]; }
+            });
+        }catch(err){ /* ignore corrupt storage */ }
+    }
+}
+window.addEventListener('DOMContentLoaded', ()=>{ new SlidePresentation(); });
+</script>
+</body>
+</html>
