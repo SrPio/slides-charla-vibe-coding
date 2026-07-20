@@ -193,12 +193,10 @@ mark.hi{ background:var(--accent); color:var(--accent-text); padding:0 8px; box-
 em.hi{ font-style:normal; color:var(--accent-ink); }
 
 /* ===========================================
-   CHROME — pagenum, blockmark, corner-mark
+   CHROME — blockmark, corner-mark
+   (per-slide .pagenum was removed — redundant with the editable
+   .progress-tag counter outside the stage; see chat history)
    =========================================== */
-.pagenum{ position:absolute; left:0; bottom:0; z-index:5; background:var(--surface-1); color:var(--text-1); padding:14px 22px; font-family:var(--font-mono); font-size:calc(20px * var(--text-scale)); letter-spacing:0.04em; }
-.pagenum.invert{ background:var(--surface-2); color:var(--text-2); }
-.pagenum.accent{ background:var(--accent); color:var(--accent-text); }
-
 .blockmark{ width:44px; height:44px; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:4px; }
 .blockmark span{ background:currentColor; opacity:0.15; }
 .blockmark span:nth-child(1), .blockmark span:nth-child(4){ opacity:1; }
@@ -332,7 +330,18 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     font-family:var(--font-mono); font-size:14px; letter-spacing:0.08em;
     color:rgba(243,238,251,0.55); background:rgba(20,16,30,0.5); padding:8px 14px;
     border:1px solid rgba(255,255,255,0.14);
+    display:flex; align-items:center; gap:2px;
 }
+/* Slide-number half of the counter doubles as a "go to slide" field —
+   type a number + Enter (or blur) to jump. Sized/styled to look like
+   plain text until focused. */
+.progress-input{
+    width:2.1ch; border:none; background:transparent; padding:0; margin:0;
+    color:#f3eefb; font-family:var(--font-mono); font-size:14px; letter-spacing:0.08em;
+    text-align:right; cursor:pointer;
+}
+.progress-input:focus{ outline:none; color:var(--accent-ink); cursor:text; }
+.progress-tag:has(.progress-input:focus){ border-color:var(--accent-ink); }
 .nav-hint{
     position:fixed; bottom:24px; left:24px; z-index:2000;
     font-family:var(--font-mono); font-size:13px; letter-spacing:0.06em;
@@ -580,7 +589,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum invert">01 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -610,7 +618,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum">02 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -634,7 +641,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:20px; font-size:calc(26px * var(--text-scale)); color:var(--muted); max-width:1200px;">Apasionado del diseño gráfico, el arte digital y el UX/UI. Fuera del código, fanático confeso de la cultura pop — así que si se me escapa una referencia de película, videojuego o cómic, ya saben de dónde viene.</p>
         </div>
       </div>
-      <div class="pagenum">03 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -652,7 +658,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:24px; color:var(--muted); max-width:900px;">Un pequeño glosario para que todos hablemos el mismo idioma durante la charla.</p>
         </div>
       </div>
-      <div class="pagenum invert">04 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -713,7 +718,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8; font-size:calc(17px * var(--text-scale));">Explica cómo se implementará el sistema: tecnologías, componentes y decisiones técnicas.</p>
         </div>
       </div>
-      <div class="pagenum">05 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -728,7 +732,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:28px; color:var(--muted); max-width:1000px; font-size:calc(28px * var(--text-scale));">Ya no es una promesa futurista. Es la forma en que ya estamos construyendo software.</p>
         </div>
       </div>
-      <div class="pagenum invert">06 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -757,7 +760,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum">07 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -819,7 +821,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:12px; opacity:0.85;">Cursor, Claude Code, Gemini CLI: implementan features completas, corren tests y proponen soluciones integrales.</p>
         </div>
       </div>
-      <div class="pagenum">08 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -853,7 +854,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum invert">09 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -868,7 +868,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:32px; font-size:calc(30px * var(--text-scale)); max-width:1300px; opacity:0.9;">Aprovechar la velocidad y creatividad de los agentes de IA sin renunciar al pensamiento crítico: buena arquitectura, restricciones claras, validación de resultados, seguridad y mantenibilidad.</p>
         </div>
       </div>
-      <div class="pagenum accent">10 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -891,7 +890,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:18px; opacity:0.85;">Comprende el problema, define el diseño, establece las reglas, supervisa la ejecución y decide cuándo el trabajo cumple los objetivos.</p>
         </div>
       </div>
-      <div class="pagenum">11 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -906,7 +904,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:30px; color:var(--muted); max-width:1200px; font-size:calc(28px * var(--text-scale));">La IA acelera la construcción del software. La responsabilidad sobre lo que construimos —y por qué— sigue siendo completamente humana.</p>
         </div>
       </div>
-      <div class="pagenum">12 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -923,7 +920,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(78px * var(--text-scale));">Investigación y Aprendizaje<br>de Alto Impacto</h1>
         </div>
       </div>
-      <div class="pagenum invert">13 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -943,7 +939,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:20px; opacity:0.85; max-width:900px;">Tomamos el control total de las fuentes de información — la IA solo responde con base en lo que nosotros le entregamos.</p>
         </div>
       </div>
-      <div class="pagenum invert">14 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -971,7 +966,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:18px; color:var(--text-2); font-size:calc(27px * var(--text-scale)); opacity:0.85;">Citas directas que llevan al segundo exacto de un video o al párrafo de un documento — eliminando la incertidumbre.</p>
         </div>
       </div>
-      <div class="pagenum">15 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -994,7 +988,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum accent">16 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1011,7 +1004,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(76px * var(--text-scale));">Transformando el Ciclo<br>de Vida del Desarrollo</h1>
         </div>
       </div>
-      <div class="pagenum invert">17 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1036,7 +1028,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:14px; color:var(--muted);">A partir de las notas, la IA genera Historias de Usuario y Criterios de Aceptación — definiendo sin ambigüedad cuándo una tarea está "terminada".</p>
         </div>
       </div>
-      <div class="pagenum">18 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1054,7 +1045,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p style="color:var(--text-2); font-size:calc(26px * var(--text-scale)); line-height:2;"><span style="color:var(--accent);">GIVEN</span> un usuario autenticado<br><span style="color:var(--accent);">WHEN</span> completa el formulario de pago<br><span style="color:var(--accent);">THEN</span> la orden queda confirmada</p>
         </div>
       </div>
-      <div class="pagenum invert">19 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1086,7 +1076,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
       </div>
-      <div class="pagenum accent">20 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1114,7 +1103,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:10px; opacity:0.85;">Se implementa el código para que los tests pasen.</p>
         </div>
       </div>
-      <div class="pagenum">21 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1135,7 +1123,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:16px; color:var(--text-2); opacity:0.85;">Estándar de facto para definir reglas de estilo (ej. snake_case siempre) y las "fuentes de verdad" del proyecto.</p>
         </div>
       </div>
-      <div class="pagenum accent">22 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1163,7 +1150,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:12px; opacity:0.85;">MongoDB MCP: la IA consulta la estructura real de las colecciones y propone queries con precisión.</p>
         </div>
       </div>
-      <div class="pagenum">23 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1180,7 +1166,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(70px * var(--text-scale));">Automatización, Prototipado<br>y Seguridad</h1>
         </div>
       </div>
-      <div class="pagenum invert">24 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1204,7 +1189,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="color:var(--text-2); opacity:0.85;">Para flujos más complejos: conecta más de <mark class="hi">500</mark> aplicaciones mediante nodos y triggers.</p>
         </div>
       </div>
-      <div class="pagenum">25 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1231,58 +1215,67 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8;">Automáticamente, sin intervención manual.</p>
         </div>
       </div>
-      <div class="pagenum accent">26 / 33</div>
     </section>
 
     <!-- ============================================================
-         SLIDE 28 — FLUJO DISEÑO → DESARROLLO (PIPELINE 5 PASOS)
+         SLIDE 28 — FLUJO PLAN → DISEÑO → DESARROLLO (PIPELINE 6 PASOS)
          ============================================================ -->
     <section class="slide" data-num="27">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="eyebrow"><span class="dot"></span>De Stitch a un MVP funcional</div>
+          <div class="eyebrow"><span class="dot"></span>Del plan a un MVP funcional</div>
         </div>
         <div class="panel reveal" style="grid-column:1/13; grid-row:2/9; padding:12px 8px;">
           <div class="flow-row">
             <div class="flow-step">
+              <div class="tool-badge" style="background:none;border:none;padding:0; gap:6px;">
+                <div class="ic" style="width:26px; height:26px;"><svg><use href="#ic-book"/></svg></div>
+                <div class="ic" style="width:26px; height:26px;"><svg><use href="#ic-gemini"/></svg></div>
+                <div class="ic" style="width:26px; height:26px; color:var(--accent);"><svg><use href="#ic-openai"/></svg></div>
+              </div>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">01</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Plan del proyecto</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">NotebookLM, Gemini y/o ChatGPT para investigar y definir el plan antes de diseñar.</p>
+            </div>
+            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
+            <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-layers"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">01</div>
-              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Google Stitch</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Genera pantallas de UI desde un prompt de texto.</p>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">02</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Google Stitch</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Genera pantallas de UI desde un prompt de texto.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-figma"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">02</div>
-              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Figma (MCP)</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Refina el diseño y sirve de contexto para el editor.</p>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">03</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Figma (MCP)</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Refina el diseño y sirve de contexto para el editor.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-cursor"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">03</div>
-              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Cursor / Antigravity</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Implementan pantallas completas desde el diseño.</p>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">04</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Cursor / Antigravity</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Implementan pantallas completas desde el diseño.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-supabase"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">04</div>
-              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Supabase / Firebase</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">MCP de backend: tablas, auth y despliegue.</p>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">05</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Supabase / Firebase</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">MCP de backend: tablas, auth y despliegue.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-rocket"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(36px * var(--text-scale));">05</div>
-              <h3 class="card-h" style="font-size:calc(20px * var(--text-scale));">Antigravity QA</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(17px * var(--text-scale));">Controla el navegador y valida el flujo, sin tests manuales.</p>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">06</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Antigravity QA</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Controla el navegador y valida el flujo, sin tests manuales.</p>
             </div>
           </div>
         </div>
       </div>
-      <div class="pagenum">27 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1304,7 +1297,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:16px; opacity:0.9;">Security by Design y Security by Default: auditar cada sugerencia de la IA, hashing de contraseñas y validaciones robustas en el servidor.</p>
         </div>
       </div>
-      <div class="pagenum">28 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1318,7 +1310,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <h1 class="display" style="margin-top:24px; color:var(--text-2);">El Desarrollador<br><em class="hi">Orquesta</em></h1>
         </div>
       </div>
-      <div class="pagenum invert">29 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1330,23 +1321,27 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
           <div class="eyebrow"><span class="dot"></span>Director de orquesta: el modelo correcto para cada tarea</div>
         </div>
-        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+        <div class="panel ink reveal" style="grid-column:1/4; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="color:var(--text-2); font-size:calc(28px * var(--text-scale));">Opus</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Razonamiento profundo.</p>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(26px * var(--text-scale));">Haiku</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Tareas rápidas y económicas.</p>
         </div>
-        <div class="panel accent reveal" style="grid-column:5/9; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+        <div class="panel accent reveal" style="grid-column:4/7; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent-text);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(28px * var(--text-scale));">Sonnet</h3>
+          <h3 class="card-h" style="font-size:calc(26px * var(--text-scale));">Sonnet</h3>
           <p class="body-sm" style="margin-top:10px; opacity:0.85;">Referencia versátil, el punto de equilibrio.</p>
         </div>
-        <div class="panel reveal" style="grid-column:9/13; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+        <div class="panel reveal" style="grid-column:7/10; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(28px * var(--text-scale));">Haiku</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Tareas rápidas y económicas.</p>
+          <h3 class="card-h" style="font-size:calc(26px * var(--text-scale));">Opus</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Razonamiento profundo.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:10/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(26px * var(--text-scale));">Fable</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">La incorporación más nueva a la familia.</p>
         </div>
       </div>
-      <div class="pagenum">30 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1360,7 +1355,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body" style="margin-top:34px; font-size:calc(32px * var(--text-scale)); max-width:1300px; opacity:0.9;">Pero el ingenio, la arquitectura y la supervisión crítica siguen siendo — y seguirán siendo — nuestra responsabilidad única.</p>
         </div>
       </div>
-      <div class="pagenum accent">31 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -1379,7 +1373,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <p class="body-sm" style="word-break:break-all; color:var(--muted);">github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness</p>
         </div>
       </div>
-      <div class="pagenum invert">32 / 33</div>
     </section>
 
     <section class="slide" data-num="33">
@@ -1422,7 +1415,6 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
         </a>
       </div>
-      <div class="pagenum invert">33 / 33</div>
     </section>
 
   </main>
@@ -1444,7 +1436,10 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
   </div>
   <button class="theme-toggle" id="themeToggle" title="Cambiar tema (T)">◐</button>
 </div>
-<div class="progress-tag" id="progressTag">01 / 33</div>
+<div class="progress-tag" id="progressTag" title="Escribe un número y presiona Enter para ir a esa slide">
+  <input id="progressInput" class="progress-input" value="01" inputmode="numeric" autocomplete="off" aria-label="Ir a la slide número">
+  <span>/ <span id="progressTotal">33</span></span>
+</div>
 <div class="nav-hint">← → · Space · Swipe</div>
 <div class="edit-hotzone" id="editHotzone"></div>
 <button class="edit-toggle" id="editToggle" title="Modo edición (E)">✏️</button>
@@ -1461,8 +1456,11 @@ class SlidePresentation{
         this.stage = document.getElementById('deckStage');
         this.viewport = document.getElementById('viewport');
         this.progressTag = document.getElementById('progressTag');
+        this.progressInput = document.getElementById('progressInput');
+        document.getElementById('progressTotal').textContent = String(this.total).padStart(2,'0');
         this.setupStageScale();
         this.setupKeyboardNav();
+        this.setupProgressJump();
         this.setupTouchNav();
         this.setupWheelNav();
         this.setupParallax();
@@ -1489,13 +1487,14 @@ class SlidePresentation{
             s.classList.toggle('active', i===this.current);
             s.classList.toggle('visible', i===this.current);
         });
-        this.progressTag.textContent = String(this.current+1).padStart(2,'0') + ' / ' + String(this.total).padStart(2,'0');
+        this.progressInput.value = String(this.current+1).padStart(2,'0');
     }
     next(){ this.showSlide(this.current+1); }
     prev(){ this.showSlide(this.current-1); }
     setupKeyboardNav(){
         document.addEventListener('keydown', (e)=>{
             if(e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
             if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); this.next(); }
             else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); this.prev(); }
             else if(e.key==='Home'){ this.showSlide(0); }
@@ -1578,6 +1577,20 @@ class SlidePresentation{
         // (not just the active one) and lays each .slide out as its own landscape page —
         // so window.print() + "Save as PDF" is all that's needed, no extra libraries.
         document.getElementById('exportPdfBtn').addEventListener('click', ()=>window.print());
+    }
+    setupProgressJump(){
+        const input = this.progressInput;
+        input.addEventListener('focus', ()=>input.select());
+        input.addEventListener('keydown', (e)=>{
+            e.stopPropagation();
+            if(e.key === 'Enter'){ input.blur(); }
+            else if(e.key === 'Escape'){ input.value = String(this.current+1).padStart(2,'0'); input.blur(); }
+        });
+        input.addEventListener('blur', ()=>{
+            const n = parseInt(input.value, 10);
+            if(!isNaN(n) && n>=1 && n<=this.total){ this.showSlide(n-1); }
+            else{ input.value = String(this.current+1).padStart(2,'0'); }
+        });
     }
     setupChromeToggle(){
         this.chromeGroup = document.getElementById('chromeGroup');
