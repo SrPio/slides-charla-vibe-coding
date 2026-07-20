@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/vibe-coding-charla.html" }
+  ]
+}
