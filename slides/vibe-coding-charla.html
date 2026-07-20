@@ -42,6 +42,9 @@
     --line: rgba(243,238,251,0.14);
     --glow-1: rgba(124,92,255,0.38);
     --glow-2: rgba(94,234,212,0.16);
+    /* Text/icon-only accent: on dark surfaces the decorative --accent (#ac8dff)
+       already reads at 6.7–7.5:1, so this just mirrors it. */
+    --accent-ink:#ac8dff;
 }
 [data-theme="light"]{
     --frame-bg:#e9e4f2;
@@ -53,6 +56,12 @@
     --line: rgba(21,16,31,0.16);
     --glow-1: rgba(124,92,255,0.20);
     --glow-2: rgba(14,170,150,0.14);
+    /* --accent (#ac8dff) as TEXT/icon color on light surfaces was only ~2.1–2.4:1
+       (fails WCAG AA). --accent-ink is a darker, more saturated violet reserved
+       for foreground use — kept ≥4.5:1 even after the .label 0.75 opacity dim.
+       --accent itself is untouched (panel.accent fill, mark.hi swatch, chart
+       fills on always-dark .panel.ink all still need the lighter violet). */
+    --accent-ink:#4018aa;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -77,7 +86,7 @@ img, video, canvas, svg{ max-width:100%; max-height:100%; }
     .deck-stage{ position:static; width:auto; height:auto; transform:none !important; background:none; }
     .slide{ position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
     .slide:last-child{ break-after:auto; page-break-after:auto; }
-    .deck-controls, .theme-toggle, .text-scale-ctrl, .progress-tag, .nav-hint, .edit-hotzone, .edit-toggle{ display:none !important; }
+    .deck-controls, .chrome-toggle, .chrome-group, .theme-toggle, .text-scale-ctrl, .export-pdf-btn, .progress-tag, .nav-hint, .edit-hotzone, .edit-toggle{ display:none !important; }
     /* Every slide-entrance animation below is gated on ".slide.visible" so only the
        currently-active slide ever reaches its rendered end-state. For print, every
        slide must render fully regardless of which one was active in the browser —
@@ -127,6 +136,13 @@ img, video, canvas, svg{ max-width:100%; max-height:100%; }
 .panel.ink{ background:var(--surface-2); color:var(--text-2); }
 .panel.accent{ background:var(--accent); color:var(--accent-text); }
 .panel.bordered{ border:1px solid var(--line); }
+/* .panel.ink and .panel.accent are always dark / always-light-violet regardless
+   of the light/dark toggle, so --accent-ink and --muted (both theme-flipping by
+   default) need a local, theme-independent value inside them — otherwise the
+   light-theme values (tuned for light backgrounds) land on these permanently
+   dark/colored surfaces and become unreadable. */
+.panel.ink{ --accent-ink:var(--accent); --muted: rgba(243,238,251,0.62); }
+.panel.accent{ --muted:var(--accent-text); }
 
 /* Signature grid texture inside panels */
 .panel::after{
@@ -163,8 +179,8 @@ img, video, canvas, svg{ max-width:100%; max-height:100%; }
 /* ===========================================
    TYPOGRAPHY
    =========================================== */
-.eyebrow{ font-family:var(--font-mono); font-size:calc(20px * var(--text-scale)); font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:12px; }
-.eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 14px var(--accent); }
+.eyebrow{ font-family:var(--font-mono); font-size:calc(20px * var(--text-scale)); font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-ink); display:flex; align-items:center; gap:12px; }
+.eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent-ink); box-shadow:0 0 14px var(--accent-ink); }
 
 h1.display{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.03em; line-height:0.95; font-size:calc(118px * var(--text-scale)); }
 h1.title{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:-0.02em; line-height:0.98; font-size:calc(80px * var(--text-scale)); }
@@ -174,7 +190,7 @@ p.body{ font-family:var(--font-display); font-weight:400; font-size:calc(26px * 
 p.body-sm{ font-family:var(--font-display); font-weight:400; font-size:calc(21px * var(--text-scale)); line-height:1.48; }
 .label{ font-family:var(--font-mono); font-size:calc(16px * var(--text-scale)); letter-spacing:0.1em; text-transform:uppercase; opacity:0.75; }
 mark.hi{ background:var(--accent); color:var(--accent-text); padding:0 8px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
-em.hi{ font-style:normal; color:var(--accent); }
+em.hi{ font-style:normal; color:var(--accent-ink); }
 
 /* ===========================================
    CHROME — pagenum, blockmark, corner-mark
@@ -188,7 +204,7 @@ em.hi{ font-style:normal; color:var(--accent); }
 .blockmark span:nth-child(1), .blockmark span:nth-child(4){ opacity:1; }
 
 .deck-title-tag{ position:absolute; top:56px; right:56px; z-index:5; font-family:var(--font-mono); font-size:calc(15px * var(--text-scale)); letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
-.deck-title-tag b{ color:var(--accent); }
+.deck-title-tag b{ color:var(--accent-ink); }
 
 /* ===========================================
    REVEAL / STAGGER
@@ -274,15 +290,36 @@ em.hi{ font-style:normal; color:var(--accent); }
    =========================================== */
 .flow-row{ display:flex; align-items:stretch; gap:0; height:100%; }
 .flow-step{ flex:1; display:flex; flex-direction:column; gap:14px; padding:8px 18px; position:relative; }
-.flow-num{ font-family:var(--font-display); font-weight:700; font-size:calc(56px * var(--text-scale)); color:var(--accent); letter-spacing:-0.02em; }
+.flow-num{ font-family:var(--font-display); font-weight:700; font-size:calc(56px * var(--text-scale)); color:var(--accent-ink); letter-spacing:-0.02em; }
 .flow-arrow{ display:flex; align-items:center; justify-content:center; width:56px; color:var(--muted); }
 .flow-arrow svg{ width:32px; height:32px; }
 
 /* ===========================================
    THEME TOGGLE + DECK CONTROLS (outside stage)
    =========================================== */
+/* Persistent show/hide handle — always visible, top-right corner. Everything
+   else in .chrome-group (export/text-scale/theme) can be tucked away with it
+   (e.g. while presenting, so the audience isn't looking at UI chrome). */
+.chrome-toggle{
+    position:fixed; top:22px; right:22px; z-index:2001;
+    width:52px; height:52px; border:1px solid rgba(255,255,255,0.25);
+    background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
+    color:#f3eefb; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:18px;
+}
+.chrome-toggle:hover{ background:rgba(172,141,255,0.25); }
+
+/* The hideable group — a plain flex row anchored just left of .chrome-toggle.
+   Hiding it toggles opacity/transform/pointer-events; layout position never
+   changes so re-showing it doesn't jump. */
+.chrome-group{
+    position:fixed; top:22px; right:86px; z-index:2000;
+    display:flex; align-items:center; gap:14px;
+    transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo);
+}
+.chrome-group.hidden{ opacity:0; transform:translateY(-14px); pointer-events:none; }
+
 .theme-toggle{
-    position:fixed; top:22px; right:22px; z-index:2000;
     width:52px; height:52px; border:1px solid rgba(255,255,255,0.25);
     background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
     color:#f3eefb; display:flex; align-items:center; justify-content:center;
@@ -306,7 +343,6 @@ em.hi{ font-style:normal; color:var(--accent); }
    font-size reads via calc(Npx * var(--text-scale)). Chrome buttons themselves
    stay a fixed size; only slide typography responds. */
 .text-scale-ctrl{
-    position:fixed; top:22px; right:86px; z-index:2000;
     display:flex; align-items:center; gap:1px;
     border:1px solid rgba(255,255,255,0.25);
     background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
@@ -320,7 +356,6 @@ em.hi{ font-style:normal; color:var(--accent); }
 .text-scale-ctrl .val{ width:44px; text-align:center; font-size:12px; letter-spacing:0.04em; opacity:0.8; }
 
 .export-pdf-btn{
-    position:fixed; top:22px; right:222px; z-index:2000;
     height:52px; padding:0 18px; display:flex; align-items:center; gap:10px;
     border:1px solid rgba(255,255,255,0.25);
     background:rgba(20,16,30,0.55); backdrop-filter:blur(6px);
@@ -452,6 +487,25 @@ em.hi{ font-style:normal; color:var(--accent); }
 <symbol id="ic-flask" viewBox="0 0 24 24">
   <path fill="currentColor" d="M9 2h6v1.2L15 9l5 10.5A2 2 0 0118.2 22H5.8A2 2 0 014 19.5L9 9 9 3.2z"/>
 </symbol>
+<symbol id="ic-chip" viewBox="0 0 24 24">
+  <rect x="7" y="7" width="10" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <rect x="10" y="10" width="4" height="4" fill="currentColor"/>
+  <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+</symbol>
+<symbol id="ic-plug" viewBox="0 0 24 24">
+  <path d="M9 2v6M15 2v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <rect x="7" y="8" width="10" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <path d="M12 15v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <circle cx="12" cy="21" r="1.4" fill="currentColor"/>
+</symbol>
+<symbol id="ic-puzzle" viewBox="0 0 24 24">
+  <path d="M4 4h6v2.2a1.8 1.8 0 103.6 0V4H20v6h-2.2a1.8 1.8 0 100 3.6H20v6h-6v-2.2a1.8 1.8 0 10-3.6 0V20H4v-6h2.2a1.8 1.8 0 100-3.6H4V4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+</symbol>
+<symbol id="ic-target" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+</symbol>
 <symbol id="ic-openai" viewBox="0 0 24 24">
   <g fill="currentColor">
     <rect x="10.6" y="2.4" width="2.8" height="8" rx="1.4"/>
@@ -526,7 +580,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum invert">01 / 34</div>
+      <div class="pagenum invert">01 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -556,7 +610,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum">02 / 34</div>
+      <div class="pagenum">02 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -580,7 +634,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:20px; font-size:calc(26px * var(--text-scale)); color:var(--muted); max-width:1200px;">Apasionado del diseño gráfico, el arte digital y el UX/UI. Fuera del código, fanático confeso de la cultura pop — así que si se me escapa una referencia de película, videojuego o cómic, ya saben de dónde viene.</p>
         </div>
       </div>
-      <div class="pagenum">03 / 34</div>
+      <div class="pagenum">03 / 33</div>
     </section>
 
     <!-- ============================================================
@@ -598,79 +652,74 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:24px; color:var(--muted); max-width:900px;">Un pequeño glosario para que todos hablemos el mismo idioma durante la charla.</p>
         </div>
       </div>
-      <div class="pagenum invert">04 / 34</div>
+      <div class="pagenum invert">04 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 05 — CONCEPTOS CLAVE (1/2)
          ============================================================ -->
     <section class="slide" data-num="05">
-      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="eyebrow"><span class="dot"></span>Glosario · Parte 1 de 2</div>
+          <div class="eyebrow"><span class="dot"></span>Glosario · Conceptos clave</div>
         </div>
-        <div class="panel ink reveal" style="grid-column:1/4; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">LLM</div>
-          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(26px * var(--text-scale));">Large Language Model</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--text-2); opacity:0.8;">Modelo de IA entrenado con grandes cantidades de texto para entender y generar lenguaje, responder preguntas y escribir código.</p>
+        <div class="panel ink reveal" style="grid-column:1/4; grid-row:2/6; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent);"><svg><use href="#ic-chip"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent);">LLM</div>
+          <h3 class="card-h" style="margin-top:6px; color:var(--text-2); font-size:calc(21px * var(--text-scale));">Large Language Model</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8; font-size:calc(17px * var(--text-scale));">Modelo de IA entrenado con grandes cantidades de texto para entender y generar lenguaje, responder preguntas y escribir código.</p>
         </div>
-        <div class="panel reveal" style="grid-column:4/7; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">MCP</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Model Context Protocol</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Protocolo que permite a una IA conectarse de forma estandarizada con herramientas, APIs y bases de datos.</p>
+        <div class="panel reveal" style="grid-column:4/7; grid-row:2/6; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-ink);"><svg><use href="#ic-plug"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-ink);">MCP</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Model Context Protocol</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted); font-size:calc(17px * var(--text-scale));">Protocolo que permite a una IA conectarse de forma estandarizada con herramientas, APIs y bases de datos.</p>
         </div>
-        <div class="panel accent reveal" style="grid-column:7/10; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent-text); opacity:0.75;">Skills</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Instrucciones reutilizables</h3>
-          <p class="body-sm" style="margin-top:16px; opacity:0.85;">Enseñan a la IA cómo realizar una tarea específica de manera consistente.</p>
+        <div class="panel accent reveal" style="grid-column:7/10; grid-row:2/6; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-text); opacity:0.85;"><svg><use href="#ic-book"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-text); opacity:0.75;">Skills</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Instrucciones reutilizables</h3>
+          <p class="body-sm" style="margin-top:10px; opacity:0.85; font-size:calc(17px * var(--text-scale));">Enseñan a la IA cómo realizar una tarea específica de manera consistente.</p>
         </div>
-        <div class="panel reveal" style="grid-column:10/13; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">CLI</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Command Line Interface</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Interfaz para interactuar con un programa mediante comandos escritos en la terminal.</p>
+        <div class="panel reveal" style="grid-column:10/13; grid-row:2/6; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-ink);"><svg><use href="#ic-terminal"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-ink);">CLI</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Command Line Interface</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted); font-size:calc(17px * var(--text-scale));">Interfaz para interactuar con un programa mediante comandos escritos en la terminal.</p>
         </div>
-      </div>
-      <div class="pagenum">05 / 34</div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 06 — CONCEPTOS CLAVE (2/2)
-         ============================================================ -->
-    <section class="slide" data-num="06">
-      <div class="parallax-orbs"><div class="orb o2"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="eyebrow"><span class="dot"></span>Glosario · Parte 2 de 2</div>
+        <div class="panel reveal" style="grid-column:1/4; grid-row:6/9; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-ink);"><svg><use href="#ic-puzzle"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-ink);">Plugins</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Extensiones de IA</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted); font-size:calc(17px * var(--text-scale));">Agregan nuevas funciones o integraciones a una herramienta de IA.</p>
         </div>
-        <div class="panel reveal" style="grid-column:1/4; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">Plugins</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Extensiones de IA</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Agregan nuevas funciones o integraciones a una herramienta de IA.</p>
+        <div class="panel accent reveal" style="grid-column:4/7; grid-row:6/9; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-text); opacity:0.85;"><svg><use href="#ic-docs"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-text); opacity:0.75;">SRS</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Software Requirements Spec.</h3>
+          <p class="body-sm" style="margin-top:10px; opacity:0.85; font-size:calc(17px * var(--text-scale));">Documento que define los requisitos funcionales y no funcionales del software.</p>
         </div>
-        <div class="panel accent reveal" style="grid-column:4/7; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent-text); opacity:0.75;">SRS</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Software Requirements Spec.</h3>
-          <p class="body-sm" style="margin-top:16px; opacity:0.85;">Documento que define los requisitos funcionales y no funcionales del software.</p>
+        <div class="panel reveal" style="grid-column:7/10; grid-row:6/9; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent-ink);"><svg><use href="#ic-target"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent-ink);">PRD</div>
+          <h3 class="card-h" style="margin-top:6px; font-size:calc(21px * var(--text-scale));">Product Requirements Doc.</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted); font-size:calc(17px * var(--text-scale));">Describe qué producto se va a construir, para quién y qué problema resuelve.</p>
         </div>
-        <div class="panel reveal" style="grid-column:7/10; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">PRD</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(26px * var(--text-scale));">Product Requirements Doc.</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--muted);">Describe qué producto se va a construir, para quién y qué problema resuelve.</p>
-        </div>
-        <div class="panel ink reveal" style="grid-column:10/13; grid-row:2/9; padding:36px 32px; display:flex; flex-direction:column;">
-          <div class="label" style="color:var(--accent);">Arquitectura</div>
-          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(24px * var(--text-scale));">Documento Técnico</h3>
-          <p class="body-sm" style="margin-top:16px; color:var(--text-2); opacity:0.8;">Explica cómo se implementará el sistema: tecnologías, componentes y decisiones técnicas.</p>
+        <div class="panel ink reveal" style="grid-column:10/13; grid-row:6/9; padding:26px 24px; display:flex; flex-direction:column;">
+          <div class="ic" style="width:30px; height:30px; color:var(--accent);"><svg><use href="#ic-layers"/></svg></div>
+          <div class="label" style="margin-top:12px; color:var(--accent);">Arquitectura</div>
+          <h3 class="card-h" style="margin-top:6px; color:var(--text-2); font-size:calc(19px * var(--text-scale));">Documento Técnico</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8; font-size:calc(17px * var(--text-scale));">Explica cómo se implementará el sistema: tecnologías, componentes y decisiones técnicas.</p>
         </div>
       </div>
-      <div class="pagenum">06 / 34</div>
+      <div class="pagenum">05 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 07 — SECTION DIVIDER: LA NUEVA REALIDAD
          ============================================================ -->
-    <section class="slide section-divider" data-num="07">
+    <section class="slide section-divider" data-num="06">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
@@ -679,13 +728,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:28px; color:var(--muted); max-width:1000px; font-size:calc(28px * var(--text-scale));">Ya no es una promesa futurista. Es la forma en que ya estamos construyendo software.</p>
         </div>
       </div>
-      <div class="pagenum invert">07 / 34</div>
+      <div class="pagenum invert">06 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 08 — STAT: 90% USAN IA (RADIAL CHART)
          ============================================================ -->
-    <section class="slide" data-num="08">
+    <section class="slide" data-num="07">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -708,13 +757,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum">08 / 34</div>
+      <div class="pagenum">07 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 09 — EVOLUCIÓN DE LA IA EN EL EDITOR (TIMELINE)
          ============================================================ -->
-    <section class="slide" data-num="09">
+    <section class="slide" data-num="08">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
@@ -770,13 +819,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:12px; opacity:0.85;">Cursor, Claude Code, Gemini CLI: implementan features completas, corren tests y proponen soluciones integrales.</p>
         </div>
       </div>
-      <div class="pagenum">09 / 34</div>
+      <div class="pagenum">08 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 10 — STAT: +55% VELOCIDAD / 90% SATISFACCIÓN
          ============================================================ -->
-    <section class="slide" data-num="10">
+    <section class="slide" data-num="09">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -804,13 +853,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum invert">10 / 34</div>
+      <div class="pagenum invert">09 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 11 — VIBE CODING RESPONSABLE
          ============================================================ -->
-    <section class="slide" data-num="11">
+    <section class="slide" data-num="10">
       <div class="parallax-orbs"><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:88px; display:flex; flex-direction:column; justify-content:center;">
@@ -819,13 +868,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:32px; font-size:calc(30px * var(--text-scale)); max-width:1300px; opacity:0.9;">Aprovechar la velocidad y creatividad de los agentes de IA sin renunciar al pensamiento crítico: buena arquitectura, restricciones claras, validación de resultados, seguridad y mantenibilidad.</p>
         </div>
       </div>
-      <div class="pagenum accent">11 / 34</div>
+      <div class="pagenum accent">10 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 12 — ANALOGÍA: ARQUITECTO Y EQUIPO CONSTRUCTOR
          ============================================================ -->
-    <section class="slide" data-num="12">
+    <section class="slide" data-num="11">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -842,13 +891,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:18px; opacity:0.85;">Comprende el problema, define el diseño, establece las reglas, supervisa la ejecución y decide cuándo el trabajo cumple los objetivos.</p>
         </div>
       </div>
-      <div class="pagenum">12 / 34</div>
+      <div class="pagenum">11 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 13 — EL VALOR DEL DESARROLLADOR
          ============================================================ -->
-    <section class="slide" data-num="13">
+    <section class="slide" data-num="12">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/9; padding:90px; display:flex; flex-direction:column; justify-content:center;">
@@ -857,13 +906,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:30px; color:var(--muted); max-width:1200px; font-size:calc(28px * var(--text-scale));">La IA acelera la construcción del software. La responsabilidad sobre lo que construimos —y por qué— sigue siendo completamente humana.</p>
         </div>
       </div>
-      <div class="pagenum">13 / 34</div>
+      <div class="pagenum">12 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 14 — SECTION DIVIDER: BLOQUE 1
          ============================================================ -->
-    <section class="slide section-divider" data-num="14">
+    <section class="slide section-divider" data-num="13">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -874,13 +923,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(78px * var(--text-scale));">Investigación y Aprendizaje<br>de Alto Impacto</h1>
         </div>
       </div>
-      <div class="pagenum invert">14 / 34</div>
+      <div class="pagenum invert">13 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 15 — NOTEBOOKLM: VENCIENDO LAS ALUCINACIONES
          ============================================================ -->
-    <section class="slide" data-num="15">
+    <section class="slide" data-num="14">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -894,23 +943,23 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:20px; opacity:0.85; max-width:900px;">Tomamos el control total de las fuentes de información — la IA solo responde con base en lo que nosotros le entregamos.</p>
         </div>
       </div>
-      <div class="pagenum invert">15 / 34</div>
+      <div class="pagenum invert">14 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 16 — NOTEBOOKLM: FUENTES Y RESULTADOS VERIFICABLES
          ============================================================ -->
-    <section class="slide" data-num="16">
+    <section class="slide" data-num="15">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
           <div class="tool-badge" style="border:none; background:none; padding:0;">
-            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-book"/></svg></div>
+            <div class="ic" style="color:var(--accent-ink);"><svg><use href="#ic-book"/></svg></div>
             <div class="tx"><div class="nm">NotebookLM</div></div>
           </div>
         </div>
         <div class="panel reveal" style="grid-column:1/7; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent);">Fuentes confiables</div>
+          <div class="label" style="color:var(--accent-ink);">Fuentes confiables</div>
           <p class="body" style="margin-top:18px; font-size:calc(27px * var(--text-scale));">Documentación oficial (MDN, Python.org), videos de YouTube o archivos PDF locales.</p>
           <div class="tool-row" style="margin-top:26px;">
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-docs"/></svg></span>MDN</div>
@@ -922,13 +971,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:18px; color:var(--text-2); font-size:calc(27px * var(--text-scale)); opacity:0.85;">Citas directas que llevan al segundo exacto de un video o al párrafo de un documento — eliminando la incertidumbre.</p>
         </div>
       </div>
-      <div class="pagenum">16 / 34</div>
+      <div class="pagenum">15 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 17 — PROMPT ENGINEERING + DEEP RESEARCH
          ============================================================ -->
-    <section class="slide" data-num="17">
+    <section class="slide" data-num="16">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -945,13 +994,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum accent">17 / 34</div>
+      <div class="pagenum accent">16 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 18 — SECTION DIVIDER: BLOQUE 2
          ============================================================ -->
-    <section class="slide section-divider" data-num="18">
+    <section class="slide section-divider" data-num="17">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -962,13 +1011,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(76px * var(--text-scale));">Transformando el Ciclo<br>de Vida del Desarrollo</h1>
         </div>
       </div>
-      <div class="pagenum invert">18 / 34</div>
+      <div class="pagenum invert">17 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 19 — DE LA REUNIÓN AL TICKET AUTOMÁTICO
          ============================================================ -->
-    <section class="slide" data-num="19">
+    <section class="slide" data-num="18">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -987,17 +1036,17 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:14px; color:var(--muted);">A partir de las notas, la IA genera Historias de Usuario y Criterios de Aceptación — definiendo sin ambigüedad cuándo una tarea está "terminada".</p>
         </div>
       </div>
-      <div class="pagenum">19 / 34</div>
+      <div class="pagenum">18 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 20 — HISTORIAS DE USUARIO Y GHERKIN
          ============================================================ -->
-    <section class="slide" data-num="20">
+    <section class="slide" data-num="19">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/5; grid-row:1/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent);">Historia de Usuario</div>
+          <div class="label" style="color:var(--accent-ink);">Historia de Usuario</div>
           <p class="body" style="margin-top:18px; font-size:calc(26px * var(--text-scale));">Como <em class="hi">[rol]</em><br>quiero <em class="hi">[acción]</em><br>para <em class="hi">[beneficio]</em></p>
         </div>
         <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:48px; font-family:var(--font-mono); display:flex; flex-direction:column; justify-content:center;">
@@ -1005,13 +1054,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p style="color:var(--text-2); font-size:calc(26px * var(--text-scale)); line-height:2;"><span style="color:var(--accent);">GIVEN</span> un usuario autenticado<br><span style="color:var(--accent);">WHEN</span> completa el formulario de pago<br><span style="color:var(--accent);">THEN</span> la orden queda confirmada</p>
         </div>
       </div>
-      <div class="pagenum invert">20 / 34</div>
+      <div class="pagenum invert">19 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 21 — INTEGRACIÓN MCP → LINEAR / JIRA
          ============================================================ -->
-    <section class="slide" data-num="21">
+    <section class="slide" data-num="20">
       <div class="parallax-orbs"><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; justify-content:space-between;">
@@ -1037,13 +1086,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum accent">21 / 34</div>
+      <div class="pagenum accent">20 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 22 — TDD GUIADO POR IA (FLOW)
          ============================================================ -->
-    <section class="slide" data-num="22">
+    <section class="slide" data-num="21">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1065,20 +1114,20 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:10px; opacity:0.85;">Se implementa el código para que los tests pasen.</p>
         </div>
       </div>
-      <div class="pagenum">22 / 34</div>
+      <div class="pagenum">21 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 23 — EL CONTEXTO ES EL REY
          ============================================================ -->
-    <section class="slide" data-num="23">
+    <section class="slide" data-num="22">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center;">
           <h2 class="subtitle" style="font-size:calc(44px * var(--text-scale));">El "Contexto" es el <em style="font-style:normal; text-decoration:underline;">Rey</em></h2>
         </div>
         <div class="panel reveal" style="grid-column:1/7; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent);">Carpeta de contexto</div>
+          <div class="label" style="color:var(--accent-ink);">Carpeta de contexto</div>
           <p class="body" style="margin-top:16px;">Esquemas SQL o documentación técnica para que la IA entienda nuestra base de datos.</p>
         </div>
         <div class="panel ink reveal" style="grid-column:7/13; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
@@ -1086,13 +1135,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:16px; color:var(--text-2); opacity:0.85;">Estándar de facto para definir reglas de estilo (ej. snake_case siempre) y las "fuentes de verdad" del proyecto.</p>
         </div>
       </div>
-      <div class="pagenum accent">23 / 34</div>
+      <div class="pagenum accent">22 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 24 — EXTENDIENDO LA IA: SKILLS, MCP, PLUGINS
          ============================================================ -->
-    <section class="slide" data-num="24">
+    <section class="slide" data-num="23">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1114,13 +1163,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:12px; opacity:0.85;">MongoDB MCP: la IA consulta la estructura real de las colecciones y propone queries con precisión.</p>
         </div>
       </div>
-      <div class="pagenum">24 / 34</div>
+      <div class="pagenum">23 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 25 — SECTION DIVIDER: BLOQUE 3
          ============================================================ -->
-    <section class="slide section-divider" data-num="25">
+    <section class="slide section-divider" data-num="24">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -1131,18 +1180,18 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(70px * var(--text-scale));">Automatización, Prototipado<br>y Seguridad</h1>
         </div>
       </div>
-      <div class="pagenum invert">25 / 34</div>
+      <div class="pagenum invert">24 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 26 — PROTOTIPADO ULTRA-RÁPIDO Y N8N
          ============================================================ -->
-    <section class="slide" data-num="26">
+    <section class="slide" data-num="25">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/7; grid-row:1/9; padding:52px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
-            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-diamond"/></svg></div>
+            <div class="ic" style="color:var(--accent-ink);"><svg><use href="#ic-diamond"/></svg></div>
             <div class="tx"><div class="nm">Google AI Studio</div></div>
           </div>
           <p class="body">De un boceto hecho a mano a una app web funcional (Next.js/Tailwind) desplegada con un clic. La IA destruye el "síndrome de la hoja en blanco".</p>
@@ -1155,13 +1204,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="color:var(--text-2); opacity:0.85;">Para flujos más complejos: conecta más de <mark class="hi">500</mark> aplicaciones mediante nodos y triggers.</p>
         </div>
       </div>
-      <div class="pagenum">26 / 34</div>
+      <div class="pagenum">25 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 27 — N8N: CASO DE USO WEB SCRAPING
          ============================================================ -->
-    <section class="slide" data-num="27">
+    <section class="slide" data-num="26">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1182,13 +1231,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8;">Automáticamente, sin intervención manual.</p>
         </div>
       </div>
-      <div class="pagenum accent">27 / 34</div>
+      <div class="pagenum accent">26 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 28 — FLUJO DISEÑO → DESARROLLO (PIPELINE 5 PASOS)
          ============================================================ -->
-    <section class="slide" data-num="28">
+    <section class="slide" data-num="27">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1233,13 +1282,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           </div>
         </div>
       </div>
-      <div class="pagenum">28 / 34</div>
+      <div class="pagenum">27 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 29 — LA SEGURIDAD NO ES NEGOCIABLE
          ============================================================ -->
-    <section class="slide" data-num="29">
+    <section class="slide" data-num="28">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; gap:24px;">
@@ -1247,7 +1296,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h2 class="subtitle" style="color:var(--text-2); font-size:calc(42px * var(--text-scale));">La Seguridad no es Negociable</h2>
         </div>
         <div class="panel reveal" style="grid-column:1/7; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent);">Vulnerabilidades comunes</div>
+          <div class="label" style="color:var(--accent-ink);">Vulnerabilidades comunes</div>
           <p class="body" style="margin-top:16px;">Credenciales hardcodeadas (ej. "admin/123456") o controles de acceso rotos que exponen URLs internas sin login.</p>
         </div>
         <div class="panel accent reveal" style="grid-column:7/13; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
@@ -1255,13 +1304,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:16px; opacity:0.9;">Security by Design y Security by Default: auditar cada sugerencia de la IA, hashing de contraseñas y validaciones robustas en el servidor.</p>
         </div>
       </div>
-      <div class="pagenum">29 / 34</div>
+      <div class="pagenum">28 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 30 — SECTION DIVIDER: CONCLUSIÓN
          ============================================================ -->
-    <section class="slide section-divider" data-num="30">
+    <section class="slide section-divider" data-num="29">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
@@ -1269,13 +1318,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h1 class="display" style="margin-top:24px; color:var(--text-2);">El Desarrollador<br><em class="hi">Orquesta</em></h1>
         </div>
       </div>
-      <div class="pagenum invert">30 / 34</div>
+      <div class="pagenum invert">29 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 31 — EL DESARROLLADOR ORQUESTA (MODELOS)
          ============================================================ -->
-    <section class="slide" data-num="31">
+    <section class="slide" data-num="30">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1297,13 +1346,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body-sm" style="margin-top:10px; color:var(--muted);">Tareas rápidas y económicas.</p>
         </div>
       </div>
-      <div class="pagenum">31 / 34</div>
+      <div class="pagenum">30 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 32 — CIERRE / MENSAJE FINAL
          ============================================================ -->
-    <section class="slide" data-num="32">
+    <section class="slide" data-num="31">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:96px; display:flex; flex-direction:column; justify-content:center;">
@@ -1311,13 +1360,13 @@ em.hi{ font-style:normal; color:var(--accent); }
           <p class="body" style="margin-top:34px; font-size:calc(32px * var(--text-scale)); max-width:1300px; opacity:0.9;">Pero el ingenio, la arquitectura y la supervisión crítica siguen siendo — y seguirán siendo — nuestra responsabilidad única.</p>
         </div>
       </div>
-      <div class="pagenum accent">32 / 34</div>
+      <div class="pagenum accent">31 / 33</div>
     </section>
 
     <!-- ============================================================
          SLIDE 33 — FUENTES / GRACIAS
          ============================================================ -->
-    <section class="slide" data-num="33">
+    <section class="slide" data-num="32">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/4; padding:56px 64px; display:flex; flex-direction:column; justify-content:center;">
@@ -1325,15 +1374,15 @@ em.hi{ font-style:normal; color:var(--accent); }
           <div class="label" style="margin-top:16px; color:var(--accent);">Andrés Jaramillo</div>
         </div>
         <div class="panel reveal" style="grid-column:1/13; grid-row:4/9; padding:44px 64px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
-          <div class="label" style="color:var(--accent);">Fuentes</div>
+          <div class="label" style="color:var(--accent-ink);">Fuentes</div>
           <p class="body-sm" style="word-break:break-all;">blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025</p>
           <p class="body-sm" style="word-break:break-all; color:var(--muted);">github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness</p>
         </div>
       </div>
-      <div class="pagenum invert">33 / 34</div>
+      <div class="pagenum invert">32 / 33</div>
     </section>
 
-    <section class="slide" data-num="34">
+    <section class="slide" data-num="33">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
@@ -1354,7 +1403,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           <h3 class="card-h" style="margin-top:22px; font-size:calc(30px * var(--text-scale));">GitHub</h3>
           <div class="body-sm" style="margin-top:8px; color:var(--muted);">@SrPio</div>
           <div class="qr-tile"><svg viewBox="0 0 25 25"><use href="#qr-github"/></svg></div>
-          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+          <span class="social-arrow" style="color:var(--accent-ink);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
         </a>
 
         <a class="panel accent reveal social-card" href="https://andres-jaramillo.is-a.dev/" target="_blank" rel="noopener">
@@ -1373,7 +1422,7 @@ em.hi{ font-style:normal; color:var(--accent); }
           <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
         </a>
       </div>
-      <div class="pagenum invert">34 / 34</div>
+      <div class="pagenum invert">33 / 33</div>
     </section>
 
   </main>
@@ -1382,17 +1431,20 @@ em.hi{ font-style:normal; color:var(--accent); }
 <!-- ===========================================
      DECK CONTROLS (outside the fixed stage)
      =========================================== -->
-<button class="export-pdf-btn" id="exportPdfBtn" title="Exportar a PDF">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M15 2v5h5"/><path d="M8 13h8M8 17h5"/></svg>
-  Exportar PDF
-</button>
-<button class="theme-toggle" id="themeToggle" title="Cambiar tema (T)">◐</button>
-<div class="text-scale-ctrl" title="Tamaño de texto (- / +)">
-  <button id="textScaleDown" aria-label="Reducir texto">A−</button>
-  <div class="val" id="textScaleVal">100%</div>
-  <button id="textScaleUp" aria-label="Agrandar texto">A+</button>
+<button class="chrome-toggle" id="chromeToggle" title="Ocultar/mostrar controles (H)">⋮</button>
+<div class="chrome-group" id="chromeGroup">
+  <button class="export-pdf-btn" id="exportPdfBtn" title="Exportar a PDF">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M15 2v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+    Exportar PDF
+  </button>
+  <div class="text-scale-ctrl" title="Tamaño de texto (- / +)">
+    <button id="textScaleDown" aria-label="Reducir texto">A−</button>
+    <div class="val" id="textScaleVal">100%</div>
+    <button id="textScaleUp" aria-label="Agrandar texto">A+</button>
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="Cambiar tema (T)">◐</button>
 </div>
-<div class="progress-tag" id="progressTag">01 / 34</div>
+<div class="progress-tag" id="progressTag">01 / 33</div>
 <div class="nav-hint">← → · Space · Swipe</div>
 <div class="edit-hotzone" id="editHotzone"></div>
 <button class="edit-toggle" id="editToggle" title="Modo edición (E)">✏️</button>
@@ -1417,6 +1469,7 @@ class SlidePresentation{
         this.setupTheme();
         this.setupTextScale();
         this.setupExport();
+        this.setupChromeToggle();
         this.setupEdit();
         this.showSlide(0);
     }
@@ -1452,6 +1505,7 @@ class SlidePresentation{
             else if(e.key==='-' || e.key==='_'){ this.bumpTextScale(-0.05); }
             else if(e.key==='=' || e.key==='+'){ this.bumpTextScale(0.05); }
             else if(e.key==='0'){ this.setTextScale(1); }
+            else if(e.key==='h' || e.key==='H'){ this.toggleChrome(); }
         });
     }
     setupTouchNav(){
@@ -1524,6 +1578,16 @@ class SlidePresentation{
         // (not just the active one) and lays each .slide out as its own landscape page —
         // so window.print() + "Save as PDF" is all that's needed, no extra libraries.
         document.getElementById('exportPdfBtn').addEventListener('click', ()=>window.print());
+    }
+    setupChromeToggle(){
+        this.chromeGroup = document.getElementById('chromeGroup');
+        const hidden = localStorage.getItem('vibe-charla-chrome-hidden') === '1';
+        this.chromeGroup.classList.toggle('hidden', hidden);
+        document.getElementById('chromeToggle').addEventListener('click', ()=>this.toggleChrome());
+    }
+    toggleChrome(){
+        const hidden = this.chromeGroup.classList.toggle('hidden');
+        localStorage.setItem('vibe-charla-chrome-hidden', hidden ? '1' : '0');
     }
     setupEdit(){
         this.isActive = false;
