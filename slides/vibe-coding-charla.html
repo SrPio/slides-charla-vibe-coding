@@ -396,15 +396,20 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
 .edit-toggle.show, .edit-toggle.active{ opacity:1; pointer-events:auto; }
 [contenteditable="true"]{ outline:1.5px dashed var(--accent); outline-offset:4px; }
 
-/* Live reactions widget — bottom-left, above .nav-hint. Fixed dark-glass
-   colors (not theme tokens) to match the rest of this always-dark chrome
-   layer, which sits outside the theme-flipping stage. Hidden by default
-   via the HTML `hidden` attribute until the Supabase client connects
-   (offline/file:// or a CDN failure just leaves it hidden, deck unaffected). */
+/* Live reactions widget — bottom-right, stacked above .progress-tag so it
+   never covers slide content. Fixed dark-glass colors (not theme tokens) to
+   match the rest of this always-dark chrome layer, which sits outside the
+   theme-flipping stage. Hidden by default via the HTML `hidden` attribute
+   until the Supabase client connects (offline/file:// or a CDN failure just
+   leaves it hidden, deck unaffected). Draggable anywhere on screen (see
+   setupReactions() in the script) — once moved, JS switches it to inline
+   left/top and this default bottom/right position no longer applies. */
 .reactions-widget{
-    position:fixed; bottom:86px; left:24px; z-index:2000;
-    display:flex; gap:10px;
+    position:fixed; bottom:74px; right:24px; z-index:2000;
+    display:flex; flex-direction:column; gap:10px; cursor:grab; touch-action:none;
 }
+.reactions-widget.dragging{ cursor:grabbing; }
+.reactions-widget.dragging .reaction-btn{ pointer-events:none; }
 .reaction-btn{
     display:flex; align-items:center; gap:8px;
     height:44px; padding:0 14px; border:1px solid rgba(255,255,255,0.25);
@@ -432,13 +437,13 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
 .reaction-fly.subtle{ font-size:17px; animation: reaction-float-subtle 1s var(--ease-out-expo) forwards; }
 @keyframes reaction-float-subtle{
     0%{ transform:translate(0,0) scale(0.6); opacity:0; }
-    15%{ opacity:0.75; transform:translate(var(--jx,0), -24px) scale(1); }
-    100%{ transform:translate(var(--jx,0), -160px) scale(1); opacity:0; }
+    15%{ opacity:0.75; transform:translate(-24px, var(--jy,0)) scale(1); }
+    100%{ transform:translate(-160px, var(--jy,0)) scale(1); opacity:0; }
 }
 @keyframes reaction-float{
     0%{ transform:translate(0,0) scale(0.6); opacity:0; }
-    15%{ opacity:1; transform:translate(var(--jx,0), -30px) scale(1); }
-    100%{ transform:translate(var(--jx,0), -220px) scale(1.05); opacity:0; }
+    15%{ opacity:1; transform:translate(-30px, var(--jy,0)) scale(1); }
+    100%{ transform:translate(-220px, var(--jy,0)) scale(1.05); opacity:0; }
 }
 @media (prefers-reduced-motion: reduce){
     .reaction-fly{ animation:none; opacity:0; }
@@ -1798,9 +1803,9 @@ class SlidePresentation{
                 const span = document.createElement('span');
                 span.className = subtle ? 'reaction-fly subtle' : 'reaction-fly';
                 span.textContent = emoji;
-                span.style.left = (rect.left + rect.width/2 - (subtle ? 9 : 14)) + 'px';
-                span.style.top = rect.top + 'px';
-                span.style.setProperty('--jx', (Math.random()*40 - 20) + 'px');
+                span.style.left = rect.left + 'px';
+                span.style.top = (rect.top + rect.height/2 - (subtle ? 9 : 14)) + 'px';
+                span.style.setProperty('--jy', (Math.random()*40 - 20) + 'px');
                 flyLayer.appendChild(span);
                 span.addEventListener('animationend', ()=>span.remove());
             };
@@ -1852,8 +1857,83 @@ class SlidePresentation{
                 if(!flushTimer) flushTimer = setTimeout(flush, 1500);
             };
 
-            likeBtnEl.addEventListener('click', ()=>react('like', '👍', likeBtnEl));
-            heartBtnEl.addEventListener('click', ()=>react('heart', '❤️', heartBtnEl));
+            likeBtnEl.addEventListener('click', ()=>{ if(consumeDragClick()) return; react('like', '👍', likeBtnEl); });
+            heartBtnEl.addEventListener('click', ()=>{ if(consumeDragClick()) return; react('heart', '❤️', heartBtnEl); });
+
+            // Drag-and-drop: press anywhere on the widget and move it — a real
+            // drag (past a small threshold) repositions it and is persisted
+            // (as a fraction of the viewport, so it still makes sense after a
+            // resize); a plain tap/click under the threshold falls through to
+            // the like/heart handlers above untouched.
+            const REACTIONS_POS_KEY = 'vibe-charla-reactions-pos';
+            const DRAG_THRESHOLD = 6;
+            let dragState = null;
+            let dragJustHappened = false;
+            const consumeDragClick = () => {
+                if(!dragJustHappened) return false;
+                dragJustHappened = false;
+                return true;
+            };
+            const clampPosition = (left, top) => ({
+                left: Math.max(8, Math.min(window.innerWidth - widget.offsetWidth - 8, left)),
+                top: Math.max(8, Math.min(window.innerHeight - widget.offsetHeight - 8, top)),
+            });
+            const placeAt = (left, top) => {
+                widget.style.left = left + 'px';
+                widget.style.top = top + 'px';
+                widget.style.right = 'auto';
+                widget.style.bottom = 'auto';
+            };
+            const savePosition = () => {
+                const rect = widget.getBoundingClientRect();
+                localStorage.setItem(REACTIONS_POS_KEY, JSON.stringify({
+                    xPct: rect.left / window.innerWidth,
+                    yPct: rect.top / window.innerHeight,
+                }));
+            };
+            const restorePosition = () => {
+                const raw = localStorage.getItem(REACTIONS_POS_KEY);
+                if(!raw) return;
+                try{
+                    const { xPct, yPct } = JSON.parse(raw);
+                    if(typeof xPct !== 'number' || typeof yPct !== 'number') return;
+                    const { left, top } = clampPosition(xPct * window.innerWidth, yPct * window.innerHeight);
+                    placeAt(left, top);
+                }catch(err){ /* ignore corrupt storage */ }
+            };
+            // Listen on `window` (not just the widget) for move/up — dragging
+            // fast enough to outrun the widget's own bounding box would
+            // otherwise stop delivering events partway through the gesture.
+            widget.addEventListener('pointerdown', (e)=>{
+                if(e.button !== undefined && e.button !== 0) return;
+                e.preventDefault();
+                const rect = widget.getBoundingClientRect();
+                dragState = { startX:e.clientX, startY:e.clientY, offsetX:e.clientX-rect.left, offsetY:e.clientY-rect.top, moved:false };
+            });
+            window.addEventListener('pointermove', (e)=>{
+                if(!dragState) return;
+                const dx = e.clientX - dragState.startX, dy = e.clientY - dragState.startY;
+                if(!dragState.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD){
+                    dragState.moved = true;
+                    widget.classList.add('dragging');
+                }
+                if(dragState.moved){
+                    const { left, top } = clampPosition(e.clientX - dragState.offsetX, e.clientY - dragState.offsetY);
+                    placeAt(left, top);
+                }
+            });
+            const endDrag = ()=>{
+                if(!dragState) return;
+                if(dragState.moved){
+                    dragJustHappened = true;
+                    widget.classList.remove('dragging');
+                    savePosition();
+                }
+                dragState = null;
+            };
+            window.addEventListener('pointerup', endDrag);
+            window.addEventListener('pointercancel', endDrag);
+            window.addEventListener('resize', restorePosition);
 
             const reseed = ()=>{
                 supabase.from('reactions').select('hearts, likes').eq('id','main').single().then(({ data, error })=>{
@@ -1868,6 +1948,7 @@ class SlidePresentation{
             setInterval(reseed, 10000);
 
             widget.hidden = false;
+            restorePosition();
         }).catch((err)=>{ console.warn('Reactions widget unavailable (offline or CDN unreachable)', err); });
     }
     async resetReactions(){
