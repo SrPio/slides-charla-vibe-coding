@@ -291,23 +291,18 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
    so it never competes with the number for space inside the circle. */
 .radial-caption{ font-family:var(--font-mono); font-size:calc(15px * var(--text-scale)); letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); text-align:center; max-width:320px; }
 
-.bars{ display:flex; align-items:flex-end; gap:28px; height:100%; padding-top:20px; }
-.bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:14px; }
-.bar-track{ width:100%; max-width:64px; height:100%; display:flex; align-items:flex-end; background:var(--chart-track); position:relative; }
-.bar-fill{ width:100%; height:0%; background:var(--accent); transition:height 1.4s var(--ease-out-expo); }
-.slide.visible .bar-fill{ height:var(--h,0%); }
-.bar-fill.b{ background:var(--chart-b); }
-.bar-num{ font-family:var(--font-display); font-weight:700; font-size:calc(30px * var(--text-scale)); }
-.bar-name{ font-family:var(--font-mono); font-size:calc(14px * var(--text-scale)); letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); text-align:center; }
-
 /* ===========================================
    FLOW / TIMELINE COMPONENTS
    =========================================== */
-.flow-row{ display:flex; align-items:stretch; gap:0; height:100%; }
-.flow-step{ flex:1; display:flex; flex-direction:column; gap:14px; padding:8px 18px; position:relative; }
+.flow-row{ display:flex; align-items:center; gap:0; height:100%; }
+.flow-step{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:14px; padding:8px 18px; position:relative; }
 .flow-num{ font-family:var(--font-display); font-weight:700; font-size:calc(56px * var(--text-scale)); color:var(--accent-ink); letter-spacing:-0.02em; }
-.flow-arrow{ display:flex; align-items:center; justify-content:center; width:56px; color:var(--muted); }
-.flow-arrow svg{ width:32px; height:32px; }
+.flow-arrow{ display:flex; align-items:center; justify-content:center; width:56px; color:var(--muted); align-self:center; }
+.flow-arrow svg{ width:32px; height:32px; animation:flow-arrow-travel 1.8s ease-in-out infinite; }
+.flow-arrow:nth-of-type(2) svg{ animation-delay:0.2s; }
+.flow-arrow:nth-of-type(4) svg{ animation-delay:0.4s; }
+.flow-arrow:nth-of-type(6) svg{ animation-delay:0.6s; }
+@keyframes flow-arrow-travel{ 0%,100%{ transform:translateX(0); opacity:0.5; } 50%{ transform:translateX(8px); opacity:1; } }
 
 /* ===========================================
    THEME TOGGLE + DECK CONTROLS (outside stage)
@@ -621,6 +616,19 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
   <ellipse cx="12" cy="12" rx="4" ry="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
   <path d="M2.5 8.5h19M2.5 15.5h19" fill="none" stroke="currentColor" stroke-width="1.6"/>
 </symbol>
+<symbol id="ic-chrome" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.35"/>
+  <circle cx="12" cy="12" r="3.6" fill="#4285F4"/>
+  <circle cx="12" cy="4.4" r="2.3" fill="#EA4335"/>
+  <circle cx="18.8" cy="16.2" r="2.3" fill="#FBBC05"/>
+  <circle cx="5.2" cy="16.2" r="2.3" fill="#34A853"/>
+</symbol>
+<symbol id="ic-vercel" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 3l10 18H2z"/>
+</symbol>
+<symbol id="ic-cloud" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M7 18a4.5 4.5 0 01-.5-8.97A5.5 5.5 0 0117 8a4 4 0 011 7.87V18H7z"/>
+</symbol>
 <!-- QR codes — generated at authoring time with the `qrcode` package (pnpm),
      baked in as static SVG paths so the deck stays a single offline file
      with zero runtime dependencies. Same URLs as each social-card's href. -->
@@ -680,36 +688,10 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 02 — BIENVENIDA
          ============================================================ -->
-    <section class="slide" data-num="02">
-      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/8; grid-row:1/9; padding:64px 72px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="eyebrow"><span class="dot"></span>Antes de empezar</div>
-          <h2 class="subtitle" style="margin-top:22px; font-size:calc(60px * var(--text-scale));">Más que <em class="hi">Google</em></h2>
-          <p class="body" style="margin-top:28px; color:var(--muted);">Aunque el título menciona a Google, hoy recorreremos un panorama más amplio: muchas empresas le están apostando fuerte a la IA, así que hablaremos de herramientas de varios jugadores importantes del ecosistema.</p>
-        </div>
-        <div class="panel accent reveal" style="grid-column:8/13; grid-row:1/9; padding:44px; display:flex; flex-direction:column; justify-content:center; gap:26px;">
-          <div>
-            <div class="label" style="color:var(--accent-text); opacity:0.8;">Hoy en el ecosistema</div>
-            <p style="font-family:var(--font-display); font-weight:700; font-size:calc(26px * var(--text-scale)); line-height:1.25; margin-top:14px; text-transform:uppercase;">No solo Google le apuesta a la IA</p>
-          </div>
-          <div class="tool-row">
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-google"/></svg></span>Google</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-openai"/></svg></span>OpenAI</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-microsoft"/></svg></span>Microsoft</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-meta"/></svg></span>Meta</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-claude"/></svg></span>Anthropic</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-github"/></svg></span>GitHub</div>
-            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-cursor"/></svg></span>Cursor</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- ============================================================
-         SLIDE 03 — BIO PONENTE
+         SLIDE 02 — BIO PONENTE
          ============================================================ -->
-    <section class="slide" data-num="03">
+    <section class="slide" data-num="02">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal photo-panel" style="grid-column:1/5; grid-row:1/9;">
@@ -732,7 +714,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 04 — SECTION DIVIDER: CONCEPTOS CLAVE
          ============================================================ -->
-    <section class="slide section-divider" data-num="04">
+    <section class="slide section-divider" data-num="03">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -749,7 +731,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 05 — CONCEPTOS CLAVE (1/2)
          ============================================================ -->
-    <section class="slide" data-num="05">
+    <section class="slide" data-num="04">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -809,7 +791,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 07 — SECTION DIVIDER: LA NUEVA REALIDAD
          ============================================================ -->
-    <section class="slide section-divider" data-num="06">
+    <section class="slide section-divider" data-num="05">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
@@ -823,7 +805,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 08 — STAT: 90% USAN IA (RADIAL CHART)
          ============================================================ -->
-    <section class="slide" data-num="07">
+    <section class="slide" data-num="06">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -843,15 +825,16 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
               </div>
             </div>
             <div class="radial-caption" style="color:var(--text-2); opacity:0.65;">de developers usan IA a diario</div>
+            <div class="radial-caption" style="margin-top:8px; color:var(--accent);">+55% de velocidad en tareas con GitHub Copilot</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ============================================================
-         SLIDE 09 — EVOLUCIÓN DE LA IA EN EL EDITOR (TIMELINE)
+         SLIDE 08 — EVOLUCIÓN DE LA IA EN EL EDITOR (TIMELINE)
          ============================================================ -->
-    <section class="slide" data-num="08">
+    <section class="slide" data-num="07">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
@@ -910,48 +893,16 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 10 — STAT: +55% VELOCIDAD / 90% SATISFACCIÓN
+         SLIDE 09 — VIBE CODING RESPONSABLE
          ============================================================ -->
-    <section class="slide" data-num="09">
-      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="eyebrow"><span class="dot"></span>El dato detrás del hype</div>
-          <h2 class="subtitle" style="margin-top:24px; font-size:calc(46px * var(--text-scale));">No es solo<br>velocidad</h2>
-          <p class="body" style="margin-top:22px; color:var(--muted);">GitHub Copilot acelera ciertas tareas de programación hasta en un <mark class="hi">55%</mark>, liberando tiempo para arquitectura y colaboración. El <mark class="hi">90%</mark> de quienes usan estas herramientas reportan mayor satisfacción laboral.</p>
-        </div>
-        <div class="panel ink reveal" style="grid-column:6/13; grid-row:1/9; padding:56px;">
-          <div class="bars" style="height:78%;">
-            <div class="bar-col">
-              <div class="bar-num" style="color:var(--text-2);">55%</div>
-              <div class="bar-track"><div class="bar-fill" style="--h:55%;"></div></div>
-              <div class="bar-name" style="color:var(--text-2);">Velocidad<br>(Copilot)</div>
-            </div>
-            <div class="bar-col">
-              <div class="bar-num" style="color:var(--text-2);">90%</div>
-              <div class="bar-track"><div class="bar-fill b" style="--h:90%;"></div></div>
-              <div class="bar-name" style="color:var(--text-2);">Satisfacción<br>laboral</div>
-            </div>
-            <div class="bar-col">
-              <div class="bar-num" style="color:var(--text-2);">90%</div>
-              <div class="bar-track"><div class="bar-fill" style="--h:90%;"></div></div>
-              <div class="bar-name" style="color:var(--text-2);">Adopción<br>diaria de IA</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 11 — VIBE CODING RESPONSABLE
-         ============================================================ -->
-    <section class="slide" data-num="10">
+    <section class="slide" data-num="08">
       <div class="parallax-orbs"><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:88px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent-text); opacity:0.75;">El concepto central de hoy</div>
           <h1 class="display" style="margin-top:26px; font-size:calc(104px * var(--text-scale)); max-width:1500px;">Vibe Coding <em style="color:var(--accent-text); font-style:normal; text-decoration:underline; text-decoration-thickness:6px;">Responsable</em></h1>
           <p class="body" style="margin-top:32px; font-size:calc(30px * var(--text-scale)); max-width:1300px; opacity:0.9;">Aprovechar la velocidad y creatividad de los agentes de IA sin renunciar al pensamiento crítico: buena arquitectura, restricciones claras, validación de resultados, seguridad y mantenibilidad.</p>
+          <p class="body" style="margin-top:18px; font-size:calc(24px * var(--text-scale)); max-width:1300px; opacity:0.75;">El valor ya no está en escribir código, sino en aportar <mark class="hi">criterio, contexto y visión</mark>. La responsabilidad sobre lo que construimos sigue siendo completamente humana.</p>
         </div>
       </div>
     </section>
@@ -959,7 +910,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 12 — ANALOGÍA: ARQUITECTO Y EQUIPO CONSTRUCTOR
          ============================================================ -->
-    <section class="slide" data-num="11">
+    <section class="slide" data-num="09">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -979,23 +930,9 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 13 — EL VALOR DEL DESARROLLADOR
+         SLIDE 12 — SECTION DIVIDER: BLOQUE 1
          ============================================================ -->
-    <section class="slide" data-num="12">
-      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/13; grid-row:1/9; padding:90px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="eyebrow"><span class="dot"></span>Para cerrar la introducción</div>
-          <h2 class="subtitle" style="margin-top:26px; font-size:calc(58px * var(--text-scale)); max-width:1500px;">El valor ya no está en <em class="hi">escribir código</em>,<br>sino en aportar <mark class="hi">criterio, contexto y visión</mark></h2>
-          <p class="body" style="margin-top:30px; color:var(--muted); max-width:1200px; font-size:calc(28px * var(--text-scale));">La IA acelera la construcción del software. La responsabilidad sobre lo que construimos —y por qué— sigue siendo completamente humana.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 14 — SECTION DIVIDER: BLOQUE 1
-         ============================================================ -->
-    <section class="slide section-divider" data-num="13">
+    <section class="slide section-divider" data-num="10">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -1009,29 +946,10 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 15 — NOTEBOOKLM: VENCIENDO LAS ALUCINACIONES
+         SLIDE 14 — NOTEBOOKLM: ALUCINACIONES Y VERIFICABILIDAD
          ============================================================ -->
-    <section class="slide" data-num="14">
+    <section class="slide" data-num="11">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
-      <div class="frame">
-        <div class="panel ink reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent);">El miedo</div>
-          <h3 class="card-h" style="margin-top:16px; color:var(--text-2); font-size:calc(40px * var(--text-scale));">La alucinación</h3>
-          <p class="body" style="margin-top:20px; color:var(--text-2); opacity:0.8;">Que el modelo invente datos obsoletos o directamente incorrectos.</p>
-        </div>
-        <div class="panel accent reveal" style="grid-column:6/13; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="label" style="color:var(--accent-text); opacity:0.75;">La solución</div>
-          <h3 class="card-h" style="margin-top:16px; font-size:calc(44px * var(--text-scale));">NotebookLM</h3>
-          <p class="body" style="margin-top:20px; opacity:0.85; max-width:900px;">Tomamos el control total de las fuentes de información — la IA solo responde con base en lo que nosotros le entregamos.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 16 — NOTEBOOKLM: FUENTES Y RESULTADOS VERIFICABLES
-         ============================================================ -->
-    <section class="slide" data-num="15">
-      <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
           <div class="tool-badge" style="border:none; background:none; padding:0;">
@@ -1039,17 +957,26 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
             <div class="tx"><div class="nm">NotebookLM</div></div>
           </div>
         </div>
-        <div class="panel reveal" style="grid-column:1/7; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+        <div class="panel ink reveal" style="grid-column:1/7; grid-row:2/6; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">El miedo</div>
+          <h3 class="card-h" style="margin-top:12px; color:var(--text-2); font-size:calc(30px * var(--text-scale));">La alucinación</h3>
+          <p class="body-sm" style="margin-top:12px; color:var(--text-2); opacity:0.8;">Que el modelo invente datos obsoletos o directamente incorrectos.</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:7/13; grid-row:2/6; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-text); opacity:0.75;">La solución</div>
+          <h3 class="card-h" style="margin-top:12px; font-size:calc(30px * var(--text-scale));">Control total de las fuentes</h3>
+          <p class="body-sm" style="margin-top:12px; opacity:0.85;">La IA solo responde con base en lo que nosotros le entregamos: documentación oficial, videos o PDFs locales.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:1/7; grid-row:6/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent-ink);">Fuentes confiables</div>
-          <p class="body" style="margin-top:18px; font-size:calc(27px * var(--text-scale));">Documentación oficial (MDN, Python.org), videos de YouTube o archivos PDF locales.</p>
-          <div class="tool-row" style="margin-top:26px;">
+          <div class="tool-row" style="margin-top:14px;">
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-docs"/></svg></span>MDN</div>
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-python"/></svg></span>Python.org</div>
           </div>
         </div>
-        <div class="panel ink reveal" style="grid-column:7/13; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+        <div class="panel ink reveal" style="grid-column:7/13; grid-row:6/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent);">Resultados verificables</div>
-          <p class="body" style="margin-top:18px; color:var(--text-2); font-size:calc(27px * var(--text-scale)); opacity:0.85;">Citas directas que llevan al segundo exacto de un video o al párrafo de un documento — eliminando la incertidumbre.</p>
+          <p class="body-sm" style="margin-top:12px; color:var(--text-2); opacity:0.85;">Citas directas al segundo exacto de un video o al párrafo de un documento.</p>
         </div>
       </div>
     </section>
@@ -1057,7 +984,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 17 — PROMPT ENGINEERING + DEEP RESEARCH
          ============================================================ -->
-    <section class="slide" data-num="16">
+    <section class="slide" data-num="12">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/6; grid-row:1/9; padding:56px; display:flex; flex-direction:column; justify-content:center;">
@@ -1079,7 +1006,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 18 — SECTION DIVIDER: BLOQUE 2
          ============================================================ -->
-    <section class="slide section-divider" data-num="17">
+    <section class="slide section-divider" data-num="13">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -1095,7 +1022,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 19 — DE LA REUNIÓN AL TICKET AUTOMÁTICO
          ============================================================ -->
-    <section class="slide" data-num="18">
+    <section class="slide" data-num="14">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1119,7 +1046,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 20 — HISTORIAS DE USUARIO Y GHERKIN
          ============================================================ -->
-    <section class="slide" data-num="19">
+    <section class="slide" data-num="15">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/5; grid-row:1/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
@@ -1129,45 +1056,18 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
         <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:48px; font-family:var(--font-mono); display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent); margin-bottom:20px;">Criterios de aceptación · Gherkin</div>
           <p style="color:var(--text-2); font-size:calc(26px * var(--text-scale)); line-height:2;"><span style="color:var(--accent);">GIVEN</span> un usuario autenticado<br><span style="color:var(--accent);">WHEN</span> completa el formulario de pago<br><span style="color:var(--accent);">THEN</span> la orden queda confirmada</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 21 — INTEGRACIÓN MCP → LINEAR / JIRA
-         ============================================================ -->
-    <section class="slide" data-num="20">
-      <div class="parallax-orbs"><div class="orb o3"></div></div>
-      <div class="frame">
-        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; justify-content:space-between;">
-          <h3 class="card-h" style="font-size:calc(34px * var(--text-scale));">Integración con MCP</h3>
-          <div class="label" style="color:var(--accent-text); opacity:0.75;">Ahorra días de trabajo administrativo</div>
-        </div>
-        <div class="panel ink reveal" style="grid-column:1/5; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none; border:none; padding:0;">
-            <div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div>
-            <div class="tx"><div class="nm" style="color:var(--text-2);">Claude Code</div><div class="ds">Agente</div></div>
-          </div>
-        </div>
-        <div class="panel reveal" style="grid-column:5/9; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none; border:none; padding:0;">
-            <div class="ic"><svg><use href="#ic-linear"/></svg></div>
-            <div class="tx"><div class="nm">Linear</div><div class="ds">Tickets</div></div>
-          </div>
-        </div>
-        <div class="panel reveal" style="grid-column:9/13; grid-row:3/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none; border:none; padding:0;">
-            <div class="ic"><svg><use href="#ic-jira"/></svg></div>
-            <div class="tx"><div class="nm">Jira</div><div class="ds">Tickets</div></div>
+          <div class="tool-row" style="margin-top:22px;">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-linear"/></svg></span>Linear</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-jira"/></svg></span>Jira · vía MCP</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ============================================================
-         SLIDE 22 — TDD GUIADO POR IA (FLOW)
+         SLIDE 20 — TDD GUIADO POR IA (FLOW)
          ============================================================ -->
-    <section class="slide" data-num="21">
+    <section class="slide" data-num="16">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1194,7 +1094,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 23 — EL CONTEXTO ES EL REY
          ============================================================ -->
-    <section class="slide" data-num="22">
+    <section class="slide" data-num="17">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center;">
@@ -1214,26 +1114,21 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 24 — EXTENDIENDO LA IA: SKILLS, MCP, PLUGINS
          ============================================================ -->
-    <section class="slide" data-num="23">
+    <section class="slide" data-num="18">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
           <div class="eyebrow"><span class="dot"></span>Extendiendo la IA en la práctica</div>
         </div>
-        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
+        <div class="panel ink reveal" style="grid-column:1/7; grid-row:2/9; padding:44px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="color:var(--text-2); font-size:calc(24px * var(--text-scale));">Skill de Frontend Design</h3>
-          <p class="body-sm" style="margin-top:12px; color:var(--text-2); opacity:0.8;">Skill oficial de anthropics/skills: guía a la IA para construir interfaces consistentes y accesibles.</p>
+          <h3 class="card-h" style="color:var(--text-2); font-size:calc(28px * var(--text-scale));">Skill de Frontend Design</h3>
+          <p class="body-sm" style="margin-top:14px; color:var(--text-2); opacity:0.8;">Skill oficial de anthropics/skills: guía a la IA para construir interfaces consistentes y accesibles.</p>
         </div>
-        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
+        <div class="panel accent reveal" style="grid-column:7/13; grid-row:2/9; padding:44px; display:flex; flex-direction:column; justify-content:center;">
           <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic"><svg><use href="#ic-docs"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(24px * var(--text-scale));">Skill + MCP de Context7</h3>
-          <p class="body-sm" style="margin-top:12px; color:var(--muted);">Inyecta documentación siempre actualizada de librerías, evitando código basado en APIs obsoletas.</p>
-        </div>
-        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column;">
-          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;"><div class="ic"><svg><use href="#ic-mongodb"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(24px * var(--text-scale));">MCP de Base de Datos</h3>
-          <p class="body-sm" style="margin-top:12px; opacity:0.85;">MongoDB MCP: la IA consulta la estructura real de las colecciones y propone queries con precisión.</p>
+          <h3 class="card-h" style="font-size:calc(28px * var(--text-scale));">Skill + MCP de Context7</h3>
+          <p class="body-sm" style="margin-top:14px; opacity:0.85;">Inyecta documentación siempre actualizada de librerías, evitando código basado en APIs obsoletas.</p>
         </div>
       </div>
     </section>
@@ -1241,7 +1136,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 25 — SECTION DIVIDER: BLOQUE 3
          ============================================================ -->
-    <section class="slide section-divider" data-num="24">
+    <section class="slide section-divider" data-num="19">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -1257,56 +1152,37 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 26 — PROTOTIPADO ULTRA-RÁPIDO Y N8N
          ============================================================ -->
-    <section class="slide" data-num="25">
+    <section class="slide" data-num="20">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
-        <div class="panel reveal" style="grid-column:1/7; grid-row:1/9; padding:52px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
+        <div class="panel reveal" style="grid-column:1/5; grid-row:1/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;">
             <div class="ic" style="color:var(--accent-ink);"><svg><use href="#ic-diamond"/></svg></div>
             <div class="tx"><div class="nm">Google AI Studio</div></div>
           </div>
-          <p class="body">De un boceto hecho a mano a una app web funcional (Next.js/Tailwind) desplegada con un clic. La IA destruye el "síndrome de la hoja en blanco".</p>
+          <p class="body-sm">De un boceto hecho a mano a una app web funcional (Next.js/Tailwind) desplegada con un clic. La IA destruye el "síndrome de la hoja en blanco".</p>
         </div>
-        <div class="panel ink reveal" style="grid-column:7/13; grid-row:1/9; padding:52px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:20px;">
+        <div class="panel accent reveal" style="grid-column:5/9; grid-row:1/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;">
+            <div class="ic"><svg><use href="#ic-layers"/></svg></div>
+            <div class="tx"><div class="nm">Google Stitch</div></div>
+          </div>
+          <p class="body-sm" style="opacity:0.9;">Convierte un prompt de texto (o un boceto/screenshot) en pantallas de UI completas con Gemini — hasta <mark class="hi">5</mark> pantallas conectadas en un solo flujo, exportables a Figma o a código HTML/CSS listo para usar.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:9/13; grid-row:1/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="tool-badge" style="background:none; border:none; padding:0; margin-bottom:18px;">
             <div class="ic"><svg><use href="#ic-n8n"/></svg></div>
             <div class="tx"><div class="nm" style="color:var(--text-2);">n8n</div></div>
           </div>
-          <p class="body" style="color:var(--text-2); opacity:0.85;">Para flujos más complejos: conecta más de <mark class="hi">500</mark> aplicaciones mediante nodos y triggers.</p>
+          <p class="body-sm" style="color:var(--text-2); opacity:0.85;">Para flujos más complejos: conecta más de <mark class="hi">500</mark> aplicaciones mediante nodos y triggers — ej. monitorear sitios web, filtrar información (cursos de Python) y guardarla en base de datos, sin intervención manual.</p>
         </div>
       </div>
     </section>
 
     <!-- ============================================================
-         SLIDE 27 — N8N: CASO DE USO WEB SCRAPING
+         SLIDE 26 — FLUJO PLAN → DISEÑO → DESARROLLO (PIPELINE)
          ============================================================ -->
-    <section class="slide" data-num="26">
-      <div class="parallax-orbs"><div class="orb o1"></div></div>
-      <div class="frame">
-        <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="label" style="color:var(--accent-text); opacity:0.75;">Caso de uso · n8n</div>
-        </div>
-        <div class="panel reveal" style="grid-column:1/5; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="flow-num">01</div>
-          <h3 class="card-h" style="margin-top:12px; font-size:calc(26px * var(--text-scale));">Monitorea sitios web</h3>
-        </div>
-        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="flow-num">02</div>
-          <h3 class="card-h" style="margin-top:12px; font-size:calc(26px * var(--text-scale));">Filtra información específica</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Ej. cursos de Python.</p>
-        </div>
-        <div class="panel ink reveal" style="grid-column:9/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="flow-num" style="color:var(--accent);">03</div>
-          <h3 class="card-h" style="margin-top:12px; color:var(--text-2); font-size:calc(26px * var(--text-scale));">Guarda en base de datos</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.8;">Automáticamente, sin intervención manual.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 28 — FLUJO PLAN → DISEÑO → DESARROLLO (PIPELINE 6 PASOS)
-         ============================================================ -->
-    <section class="slide" data-num="27">
+    <section class="slide" data-num="21">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1326,38 +1202,30 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
-              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-layers"/></svg></div></div>
+              <div class="tool-badge" style="background:none;border:none;padding:0; gap:6px;">
+                <div class="ic" style="width:26px; height:26px; color:var(--accent);"><svg><use href="#ic-layers"/></svg></div>
+                <div class="ic" style="width:26px; height:26px;"><svg><use href="#ic-figma"/></svg></div>
+              </div>
               <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">02</div>
-              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Google Stitch</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Genera pantallas de UI desde un prompt de texto.</p>
-            </div>
-            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
-            <div class="flow-step">
-              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-figma"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">03</div>
-              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Figma (MCP)</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Refina el diseño y sirve de contexto para el editor.</p>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Diseño con IA</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Google Stitch genera pantallas desde un prompt; Figma (MCP) las refina y sirve de contexto.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
               <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-cursor"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">04</div>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">03</div>
               <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Cursor / Antigravity</h3>
               <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Implementan pantallas completas desde el diseño.</p>
             </div>
             <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
             <div class="flow-step">
-              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic"><svg><use href="#ic-supabase"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">05</div>
-              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Supabase / Firebase</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">MCP de backend: tablas, auth y despliegue.</p>
-            </div>
-            <div class="flow-arrow"><svg><use href="#ic-arrow"/></svg></div>
-            <div class="flow-step">
-              <div class="tool-badge" style="background:none;border:none;padding:0;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-rocket"/></svg></div></div>
-              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">06</div>
-              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Antigravity QA</h3>
-              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Controla el navegador y valida el flujo, sin tests manuales.</p>
+              <div class="tool-badge" style="background:none;border:none;padding:0; gap:6px;">
+                <div class="ic" style="width:26px; height:26px;"><svg><use href="#ic-supabase"/></svg></div>
+                <div class="ic" style="width:26px; height:26px; color:var(--accent);"><svg><use href="#ic-rocket"/></svg></div>
+              </div>
+              <div class="flow-num" style="font-size:calc(32px * var(--text-scale));">04</div>
+              <h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Backend & QA</h3>
+              <p class="body-sm" style="color:var(--muted); font-size:calc(16px * var(--text-scale));">Supabase/Firebase (MCP) monta tablas, auth y despliegue; Antigravity valida el flujo controlando el navegador.</p>
             </div>
           </div>
         </div>
@@ -1367,7 +1235,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 29 — LA SEGURIDAD NO ES NEGOCIABLE
          ============================================================ -->
-    <section class="slide" data-num="28">
+    <section class="slide" data-num="22">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; gap:24px;">
@@ -1388,7 +1256,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 30 — SECTION DIVIDER: CONCLUSIÓN
          ============================================================ -->
-    <section class="slide section-divider" data-num="29">
+    <section class="slide section-divider" data-num="23">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
@@ -1399,41 +1267,9 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 31 — EL DESARROLLADOR ORQUESTA (MODELOS)
+         SLIDE 30 — CIERRE / MENSAJE FINAL
          ============================================================ -->
-    <section class="slide" data-num="30">
-      <div class="parallax-orbs"><div class="orb o2"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="eyebrow"><span class="dot"></span>Director de orquesta: el modelo correcto para cada tarea</div>
-        </div>
-        <div class="panel ink reveal" style="grid-column:1/4; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="color:var(--text-2); font-size:calc(26px * var(--text-scale));">Haiku</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Tareas rápidas y económicas.</p>
-        </div>
-        <div class="panel accent reveal" style="grid-column:4/7; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent-text);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(26px * var(--text-scale));">Sonnet</h3>
-          <p class="body-sm" style="margin-top:10px; opacity:0.85;">Referencia versátil, el punto de equilibrio.</p>
-        </div>
-        <div class="panel reveal" style="grid-column:7/10; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="font-size:calc(26px * var(--text-scale));">Opus</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Razonamiento profundo.</p>
-        </div>
-        <div class="panel ink reveal" style="grid-column:10/13; grid-row:2/9; padding:36px; display:flex; flex-direction:column; justify-content:center;">
-          <div class="tool-badge" style="background:none;border:none;padding:0;margin-bottom:16px;"><div class="ic" style="color:var(--accent);"><svg><use href="#ic-claude"/></svg></div></div>
-          <h3 class="card-h" style="color:var(--text-2); font-size:calc(26px * var(--text-scale));">Fable</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">La incorporación más nueva a la familia.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         SLIDE 32 — CIERRE / MENSAJE FINAL
-         ============================================================ -->
-    <section class="slide" data-num="31">
+    <section class="slide" data-num="24">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:96px; display:flex; flex-direction:column; justify-content:center;">
@@ -1446,7 +1282,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 33 — DEMO EN VIVO
          ============================================================ -->
-    <section class="slide" data-num="32">
+    <section class="slide" data-num="25">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1465,63 +1301,101 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 34 — FUENTES / GRACIAS
+         SLIDE — CAJA DE HERRAMIENTAS (RESUMEN POR ETAPA DEL WORKFLOW)
          ============================================================ -->
-    <section class="slide" data-num="33">
-      <div class="parallax-orbs"><div class="orb o1"></div></div>
+    <section class="slide" data-num="26">
+      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
-        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/4; padding:56px 64px; display:flex; flex-direction:column; justify-content:center;">
-          <h2 class="subtitle" style="color:var(--text-2); font-size:calc(64px * var(--text-scale));">Gracias.</h2>
-          <div class="label" style="margin-top:16px; color:var(--accent);">Andrés Jaramillo</div>
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
+          <div class="eyebrow"><span class="dot"></span>Antes de cerrar</div>
+          <div class="label">Caja de herramientas de la charla · por etapa del flujo</div>
         </div>
-        <div class="panel reveal" style="grid-column:1/13; grid-row:4/9; padding:44px 64px; display:flex; align-items:center; gap:36px;">
-          <div class="qr-tile" style="width:320px; height:320px; margin-top:0; padding:22px; flex-shrink:0;"><svg viewBox="0 0 33 33"><use href="#qr-biblio"/></svg></div>
-          <div>
-            <div class="label" style="color:var(--accent-ink);">Fuentes y bibliografía</div>
-            <p class="body-sm" style="margin-top:10px; color:var(--muted);">Escanea el QR para ver todos los estudios, la documentación oficial y las herramientas citadas en esta charla.</p>
+
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/6; padding:26px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale)); color:var(--accent);">01</div><div class="label" style="color:var(--text-2);">Investigación &amp; Requisitos</div></div>
+          <div class="tool-row">
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-book"/></svg></span>NotebookLM</div>
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-gemini"/></svg></span>Gemini</div>
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-linear"/></svg></span>Linear/Jira MCP</div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/6; padding:26px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale));">02</div><div class="label">Diseño</div></div>
+          <div class="tool-row">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-layers"/></svg></span>Google Stitch</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-figma"/></svg></span>Figma MCP</div>
+          </div>
+        </div>
+        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/6; padding:26px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale)); color:var(--accent-text);">03</div><div class="label" style="color:var(--accent-text); opacity:0.85;">Desarrollo &amp; Contexto</div></div>
+          <div class="tool-row">
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-cursor"/></svg></span>Cursor</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-claude"/></svg></span>Claude Code</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-rocket"/></svg></span>Antigravity</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-docs"/></svg></span>Context7 MCP</div>
+          </div>
+        </div>
+
+        <div class="panel reveal" style="grid-column:1/5; grid-row:6/9; padding:24px; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale));">04</div><div class="label">Backend &amp; Datos</div></div>
+          <div class="tool-row">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-supabase"/></svg></span>Supabase</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-firebase"/></svg></span>Firebase</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-mongodb"/></svg></span>MongoDB MCP</div>
+          </div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:5/9; grid-row:6/9; padding:24px; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale)); color:var(--accent);">05</div><div class="label" style="color:var(--text-2);">QA &amp; Automatización</div></div>
+          <div class="tool-row">
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-rocket"/></svg></span>Antigravity QA</div>
+            <div class="tool-chip" style="background:var(--accent); color:var(--accent-text);"><span class="ic"><svg><use href="#ic-chrome"/></svg></span>Chrome DevTools MCP</div>
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-n8n"/></svg></span>n8n</div>
+          </div>
+        </div>
+        <div class="panel reveal" style="grid-column:9/13; grid-row:6/9; padding:24px; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale));">06</div><div class="label">Deploy · CLI</div></div>
+          <div class="tool-row">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-vercel"/></svg></span>Vercel CLI</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-cloud"/></svg></span>Render CLI</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-diamond"/></svg></span>AI Studio (1-clic)</div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="slide" data-num="34">
-      <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
+    <!-- ============================================================
+         SLIDE 32 — GRACIAS / FUENTES / REDES (CIERRE)
+         ============================================================ -->
+    <section class="slide" data-num="27">
+      <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
-        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
-          <div class="eyebrow"><span class="dot"></span>Sigamos en contacto</div>
-          <div class="label">Redes &amp; contacto</div>
+        <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:baseline; gap:20px;">
+            <h2 class="subtitle" style="color:var(--text-2); font-size:calc(36px * var(--text-scale));">Gracias.</h2>
+            <div class="label" style="color:var(--accent);">Andrés Jaramillo</div>
+          </div>
+          <div class="label" style="color:var(--text-2); opacity:0.75;">Fuentes &amp; redes</div>
         </div>
 
-        <a class="panel ink reveal social-card" href="https://www.linkedin.com/in/andres-fernando-jaramillo-avila/" target="_blank" rel="noopener">
-          <span class="ic" style="width:52px; height:52px;"><svg><use href="#ic-linkedin"/></svg></span>
-          <h3 class="card-h" style="margin-top:22px; color:var(--text-2); font-size:calc(30px * var(--text-scale));">LinkedIn</h3>
-          <div class="body-sm" style="margin-top:8px; color:var(--text-2); opacity:0.7; word-break:break-word;">/in/andres-fernando-jaramillo-avila</div>
-          <div class="qr-tile"><svg viewBox="0 0 33 33"><use href="#qr-linkedin"/></svg></div>
-          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        <div class="panel reveal" style="grid-column:1/5; grid-row:2/6; padding:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center;">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="ic" style="width:26px; height:26px; color:var(--accent-ink);"><svg><use href="#ic-book"/></svg></span><h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Bibliografía</h3></div>
+          <div class="qr-tile" style="width:200px; height:200px; margin-top:4px; padding:14px;"><svg viewBox="0 0 33 33"><use href="#qr-biblio"/></svg></div>
+        </div>
+        <a class="panel accent reveal social-card" style="grid-column:5/9; grid-row:2/6; padding:22px; align-items:center; gap:10px; text-align:center;" href="https://www.linkedin.com/in/andres-fernando-jaramillo-avila/" target="_blank" rel="noopener">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="ic" style="width:26px; height:26px;"><svg><use href="#ic-linkedin"/></svg></span><h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">LinkedIn</h3></div>
+          <div class="qr-tile" style="width:200px; height:200px; margin-top:4px; padding:14px;"><svg viewBox="0 0 33 33"><use href="#qr-linkedin"/></svg></div>
         </a>
-
-        <a class="panel reveal social-card" href="https://github.com/SrPio" target="_blank" rel="noopener">
-          <span class="ic" style="width:52px; height:52px; color:var(--text-1);"><svg><use href="#ic-github"/></svg></span>
-          <h3 class="card-h" style="margin-top:22px; font-size:calc(30px * var(--text-scale));">GitHub</h3>
-          <div class="body-sm" style="margin-top:8px; color:var(--muted);">@SrPio</div>
-          <div class="qr-tile"><svg viewBox="0 0 25 25"><use href="#qr-github"/></svg></div>
-          <span class="social-arrow" style="color:var(--accent-ink);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        <a class="panel ink reveal social-card" style="grid-column:9/13; grid-row:2/6; padding:22px; align-items:center; gap:10px; text-align:center;" href="https://github.com/SrPio" target="_blank" rel="noopener">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="ic" style="width:26px; height:26px; color:var(--accent);"><svg><use href="#ic-github"/></svg></span><h3 class="card-h" style="color:var(--text-2); font-size:calc(19px * var(--text-scale));">GitHub</h3></div>
+          <div class="qr-tile" style="width:200px; height:200px; margin-top:4px; padding:14px;"><svg viewBox="0 0 25 25"><use href="#qr-github"/></svg></div>
         </a>
-
-        <a class="panel accent reveal social-card" href="https://andres-jaramillo.is-a.dev/" target="_blank" rel="noopener">
-          <span class="ic" style="width:52px; height:52px; color:var(--accent-text);"><svg><use href="#ic-globe"/></svg></span>
-          <h3 class="card-h" style="margin-top:22px; color:var(--accent-text); font-size:calc(30px * var(--text-scale));">Portafolio</h3>
-          <div class="body-sm" style="margin-top:8px; color:var(--accent-text); opacity:0.75; word-break:break-word;">andres-jaramillo.is-a.dev</div>
-          <div class="qr-tile"><svg viewBox="0 0 29 29"><use href="#qr-portfolio"/></svg></div>
-          <span class="social-arrow" style="color:var(--accent-text);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        <a class="panel reveal social-card" style="grid-column:1/7; grid-row:6/9; padding:18px; align-items:center; gap:10px; text-align:center;" href="https://andres-jaramillo.is-a.dev/" target="_blank" rel="noopener">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="ic" style="width:26px; height:26px; color:var(--accent-ink);"><svg><use href="#ic-globe"/></svg></span><h3 class="card-h" style="font-size:calc(19px * var(--text-scale));">Portafolio</h3></div>
+          <div class="qr-tile" style="width:200px; height:200px; margin-top:4px; padding:14px;"><svg viewBox="0 0 29 29"><use href="#qr-portfolio"/></svg></div>
         </a>
-
-        <a class="panel ink reveal social-card" href="https://www.instagram.com/jaramillo.andress/" target="_blank" rel="noopener">
-          <span class="ic" style="width:52px; height:52px;"><svg><use href="#ic-instagram"/></svg></span>
-          <h3 class="card-h" style="margin-top:22px; color:var(--text-2); font-size:calc(30px * var(--text-scale));">Instagram</h3>
-          <div class="body-sm" style="margin-top:8px; color:var(--text-2); opacity:0.7;">@jaramillo.andress</div>
-          <div class="qr-tile"><svg viewBox="0 0 33 33"><use href="#qr-instagram"/></svg></div>
-          <span class="social-arrow" style="color:var(--accent);"><svg viewBox="0 0 24 24"><use href="#ic-arrow"/></svg></span>
+        <a class="panel ink reveal social-card" style="grid-column:7/13; grid-row:6/9; padding:18px; align-items:center; gap:10px; text-align:center;" href="https://www.instagram.com/jaramillo.andress/" target="_blank" rel="noopener">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="ic" style="width:26px; height:26px; color:var(--accent);"><svg><use href="#ic-instagram"/></svg></span><h3 class="card-h" style="color:var(--text-2); font-size:calc(19px * var(--text-scale));">Instagram</h3></div>
+          <div class="qr-tile" style="width:200px; height:200px; margin-top:4px; padding:14px;"><svg viewBox="0 0 33 33"><use href="#qr-instagram"/></svg></div>
         </a>
       </div>
     </section>

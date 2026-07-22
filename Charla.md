@@ -1,5 +1,7 @@
 **Título de la Charla: Vibe Coding con Google: De la idea al MVP en tiempo récord**
 
+*Nota de sincronización (recorte a 30 min): el deck (`slides/vibe-coding-charla.html`) se redujo de 34 a 27 slides para caber en el tiempo real de la charla. Se fusionaron o recortaron varias secciones (stats de adopción, NotebookLM, integración MCP→Linear/Jira, caso de uso de n8n, pipeline de diseño a 4 pasos) y se eliminó por completo la sección de selección de modelos (Opus/Sonnet/Haiku). Se añadió una nueva sección de cierre, "Caja de Herramientas de la Charla", con Chrome DevTools MCP y las CLIs de deploy (Vercel/Render) como recomendaciones nuevas. El texto de abajo ya refleja estos cambios.*
+
 Descripción: Descubre un flujo de trabajo práctico para transformar una idea en un MVP funcional en tiempo récord utilizando herramientas de Google y otras soluciones potenciadas por IA. Conocerás técnicas, trucos y buenas prácticas para validar, diseñar, desarrollar y acelerar la creación de productos de forma más eficiente.
 
 ¡Muy buenas noches para todos! Antes de entrar de lleno en materia, quiero contarles algo. Aunque el título de la charla menciona herramientas de Google, en realidad vamos a recorrer un panorama bastante más amplio: hoy son muchas las empresas -no solo Google- las que le están metiendo la ficha a la inteligencia artificial, así que también hablaremos de herramientas y soluciones de otros jugadores importantes en este espacio.
@@ -99,6 +101,8 @@ Ya vimos que el contexto es fundamental, pero no siempre queremos reescribir esa
 
 La IA destruye el "síndrome de la hoja en blanco". Con **Google AI Studio**, podemos pasar de un **boceto hecho a mano** a una aplicación web funcional (Next.js/Tailwind) desplegada con un solo clic.
 
+En esta misma línea de prototipado ultra-rápido está **Google Stitch**, un experimento de Google Labs (nacido de la adquisición de Galileo AI) que usa Gemini para convertir un simple prompt de texto -o incluso un boceto o una captura de pantalla- en pantallas de interfaz completas en segundos. Lo interesante es que no genera una sola pantalla suelta: puede describir un flujo completo de la aplicación y generar hasta **5 pantallas conectadas** de una sola vez, listas para exportar a Figma o directamente a código HTML/CSS. Ya lo vamos a ver de nuevo más adelante como parte del flujo de diseño a desarrollo.
+
 Para flujos de trabajo más complejos, herramientas como **n8n** permiten conectar más de 500 aplicaciones mediante **nodos y triggers**.
 
 - **Caso de uso:** Podemos crear un sistema de **Web Scraping con IA** que monitoree sitios web, filtre información específica (como cursos de Python) y guarde los resultados en una base de datos automáticamente.
@@ -124,9 +128,20 @@ La rapidez no puede comprometer la integridad. La IA a menudo genera patrones in
 - **Vulnerabilidades comunes:** Credenciales hardcodeadas (ej. "admin/123456") o controles de acceso rotos que permiten acceder a URLs internas sin loguearse.
 - **Nuestro rol:** Debemos aplicar los principios de **Security by Design** y **Security by Default**, auditando cada sugerencia de la IA para implementar hashing de contraseñas y validaciones robustas en el servidor.
 
+**Antes de Cerrar: Caja de Herramientas de la Charla**
+
+Antes de despedirme, quiero dejarles un resumen rápido: un mapa de todas las herramientas, MCPs y skills que mencionamos hoy, organizado por la etapa del flujo de trabajo donde encajan.
+
+- **01 · Investigación & Requisitos:** NotebookLM, Gemini, integración con Linear/Jira vía MCP.
+- **02 · Diseño:** Google Stitch, Figma (MCP).
+- **03 · Desarrollo & Contexto:** Cursor, Claude Code, Antigravity, Context7 (MCP).
+- **04 · Backend & Datos:** Supabase, Firebase, MongoDB (MCP).
+- **05 · QA & Automatización:** Antigravity QA (control de navegador), **MCP Chrome DevTools** -para que el agente inspeccione consola, red y DOM del navegador en tiempo real durante las pruebas, sin salir del editor-, y n8n para automatizaciones más amplias.
+- **06 · Deploy (CLI):** además de Google AI Studio con su despliegue de un clic, para proyectos que crecen más allá de eso recomiendo apoyarse en las CLIs oficiales de plataformas como **Vercel** o **Render**: permiten scriptear el despliegue, integrarlo a CI/CD y repetirlo de forma consistente en lugar de hacer clic manualmente en un dashboard cada vez.
+
 **Conclusión: El Desarrollador Orquesta**
 
-El futuro del desarrollo no es menos humano, sino **más estratégico**. El programador exitoso hoy es un **Director de Orquesta** que sabe elegir el modelo adecuado para cada tarea: **Opus** para razonamiento profundo, **Sonet** como referencia versátil y **Haiku** para tareas rápidas y económicas.
+El futuro del desarrollo no es menos humano, sino **más estratégico**. El programador exitoso hoy es quien sabe orquestar todas estas piezas -investigación, diseño, desarrollo, backend, QA y despliegue- sin perder de vista el criterio de ingeniería en cada paso.
 
 La IA es la herramienta más avanzada que hemos tenido jamás para construir, pero el ingenio, la arquitectura y la supervisión crítica siguen siendo, y seguirán siendo, nuestra responsabilidad única.
 
