@@ -386,9 +386,10 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
 .export-pdf-btn:hover{ background:rgba(172,141,255,0.25); }
 .export-pdf-btn svg{ width:16px; height:16px; }
 
-/* Edit mode affordance */
-.edit-hotzone{ position:fixed; top:0; left:0; width:80px; height:80px; z-index:2500; cursor:pointer; }
-.edit-toggle{ position:fixed; top:18px; left:18px; z-index:2501; width:40px; height:40px; border:1px solid rgba(255,255,255,0.3); background:rgba(20,16,30,0.6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+/* Edit mode affordance — kept in the DOM (setupEdit() binds listeners to it),
+   just hidden on screen so it never shows up as a stray corner button during the talk. */
+.edit-hotzone{ position:fixed; top:0; left:0; width:80px; height:80px; z-index:2500; cursor:pointer; display:none; }
+.edit-toggle{ position:fixed; top:18px; left:18px; z-index:2501; width:40px; height:40px; border:1px solid rgba(255,255,255,0.3); background:rgba(20,16,30,0.6); color:#fff; align-items:center; justify-content:center; font-size:16px; opacity:0; pointer-events:none; transition:opacity 0.3s ease; display:none; }
 .edit-toggle.show, .edit-toggle.active{ opacity:1; pointer-events:auto; }
 [contenteditable="true"]{ outline:1.5px dashed var(--accent); outline-offset:4px; }
 
@@ -1065,36 +1066,9 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 20 — TDD GUIADO POR IA (FLOW)
-         ============================================================ -->
-    <section class="slide" data-num="16">
-      <div class="parallax-orbs"><div class="orb o1"></div></div>
-      <div class="frame">
-        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
-          <div class="eyebrow"><span class="dot"></span>Desarrollo Guiado por TDD con IA</div>
-        </div>
-        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
-          <div class="flow-num" style="color:var(--accent);">01</div>
-          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(28px * var(--text-scale));">Rama aislada</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Se crea en el repositorio.</p>
-        </div>
-        <div class="panel reveal" style="grid-column:5/9; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
-          <div class="flow-num">02</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Tests vacíos</h3>
-          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Basados en los criterios de aceptación — empiezan en "rojo".</p>
-        </div>
-        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/9; padding:40px; display:flex; flex-direction:column; justify-content:flex-end;">
-          <div class="flow-num" style="color:var(--accent-text);">03</div>
-          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Rojo → Verde</h3>
-          <p class="body-sm" style="margin-top:10px; opacity:0.85;">Se implementa el código para que los tests pasen.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
          SLIDE 23 — EL CONTEXTO ES EL REY
          ============================================================ -->
-    <section class="slide" data-num="17">
+    <section class="slide" data-num="16">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center;">
@@ -1102,7 +1076,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
         </div>
         <div class="panel reveal" style="grid-column:1/7; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent-ink);">Carpeta de contexto</div>
-          <p class="body" style="margin-top:16px;">Esquemas SQL o documentación técnica para que la IA entienda nuestra base de datos.</p>
+          <p class="body" style="margin-top:16px;">Esquemas SQL, documentos SRS, PRD y de Arquitectura para que la IA entienda nuestra base de datos y el proyecto.</p>
         </div>
         <div class="panel ink reveal" style="grid-column:7/13; grid-row:3/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--accent);">agents.md</div>
@@ -1114,7 +1088,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 24 — EXTENDIENDO LA IA: SKILLS, MCP, PLUGINS
          ============================================================ -->
-    <section class="slide" data-num="18">
+    <section class="slide" data-num="17">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1136,7 +1110,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 25 — SECTION DIVIDER: BLOQUE 3
          ============================================================ -->
-    <section class="slide section-divider" data-num="19">
+    <section class="slide section-divider" data-num="18">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/5; grid-row:1/9; display:flex; align-items:center; justify-content:center;">
@@ -1144,7 +1118,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
         </div>
         <div class="panel ink reveal" style="grid-column:5/13; grid-row:1/9; padding:64px 80px; display:flex; flex-direction:column; justify-content:center;">
           <div class="label" style="color:var(--text-2);">Bloque 3</div>
-          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(70px * var(--text-scale));">Automatización, Prototipado<br>y Seguridad</h1>
+          <h1 class="title" style="margin-top:20px; color:var(--text-2); font-size:calc(70px * var(--text-scale));">Diseño, Implementación<br>y Despliegue</h1>
         </div>
       </div>
     </section>
@@ -1152,7 +1126,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 26 — PROTOTIPADO ULTRA-RÁPIDO Y N8N
          ============================================================ -->
-    <section class="slide" data-num="20">
+    <section class="slide" data-num="19">
       <div class="parallax-orbs"><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/5; grid-row:1/9; padding:40px; display:flex; flex-direction:column; justify-content:center;">
@@ -1180,9 +1154,70 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     </section>
 
     <!-- ============================================================
-         SLIDE 26 — FLUJO PLAN → DISEÑO → DESARROLLO (PIPELINE)
+         SLIDE 20 — TDD GUIADO POR IA (FLOW)
+         ============================================================ -->
+    <section class="slide" data-num="20">
+      <div class="parallax-orbs"><div class="orb o1"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>Desarrollo Guiado por TDD con IA</div>
+        </div>
+        <div class="panel ink reveal" style="grid-column:1/5; grid-row:2/8; padding:32px 40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num" style="color:var(--accent);">01</div>
+          <h3 class="card-h" style="margin-top:14px; color:var(--text-2); font-size:calc(28px * var(--text-scale));">Rama aislada</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--text-2); opacity:0.75;">Se crea en el repositorio.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:5/9; grid-row:2/8; padding:32px 40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num">02</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Tests vacíos</h3>
+          <p class="body-sm" style="margin-top:10px; color:var(--muted);">Basados en los criterios de aceptación — empiezan en "rojo".</p>
+        </div>
+        <div class="panel accent reveal" style="grid-column:9/13; grid-row:2/8; padding:32px 40px; display:flex; flex-direction:column; justify-content:flex-end;">
+          <div class="flow-num" style="color:var(--accent-text);">03</div>
+          <h3 class="card-h" style="margin-top:14px; font-size:calc(28px * var(--text-scale));">Rojo → Verde</h3>
+          <p class="body-sm" style="margin-top:10px; opacity:0.85;">Se implementa el código para que los tests pasen.</p>
+        </div>
+        <div class="panel reveal" style="grid-column:1/13; grid-row:8/9; padding:14px 32px; display:flex; align-items:center; gap:16px;">
+          <div class="label" style="color:var(--muted); white-space:nowrap;">¿Quién lo ejecuta?</div>
+          <div class="tool-row">
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-claude"/></svg></span>Claude Code</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-cursor"/></svg></span>Cursor</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-rocket"/></svg></span>Antigravity</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-chip"/></svg></span>Devin</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 21 — DESPLIEGUE: SKILLS Y CLIs
          ============================================================ -->
     <section class="slide" data-num="21">
+      <div class="parallax-orbs"><div class="orb o3"></div></div>
+      <div class="frame">
+        <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
+          <div class="eyebrow"><span class="dot"></span>De local a producción, sin salir del flujo</div>
+        </div>
+        <div class="panel reveal" style="grid-column:1/6; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent-ink);">Skills de despliegue</div>
+          <p class="body" style="margin-top:16px;">Una <em class="hi">skill de deploy</em> le enseña al agente el checklist completo -build, variables de entorno, migraciones y verificación post-deploy- para no repetirlo a mano en cada proyecto.</p>
+        </div>
+        <div class="panel ink reveal" style="grid-column:6/13; grid-row:2/9; padding:48px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="label" style="color:var(--accent);">CLIs oficiales</div>
+          <p class="body" style="margin-top:16px; color:var(--text-2); opacity:0.85;">Scriptear el despliegue en vez de hacer clic en un dashboard cada vez: repetible e integrable a CI/CD.</p>
+          <div class="tool-row" style="margin-top:24px;">
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-vercel"/></svg></span>Vercel CLI</div>
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-cloud"/></svg></span>Render CLI</div>
+            <div class="tool-chip" style="background:rgba(255,255,255,0.08); color:var(--text-2);"><span class="ic"><svg><use href="#ic-supabase"/></svg></span>Supabase CLI</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SLIDE 26 — FLUJO PLAN → DISEÑO → DESARROLLO (PIPELINE)
+         ============================================================ -->
+    <section class="slide" data-num="22">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1235,7 +1270,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 29 — LA SEGURIDAD NO ES NEGOCIABLE
          ============================================================ -->
-    <section class="slide" data-num="22">
+    <section class="slide" data-num="23">
       <div class="parallax-orbs"><div class="orb o1"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/3; padding:0 48px; display:flex; align-items:center; gap:24px;">
@@ -1256,7 +1291,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 30 — SECTION DIVIDER: CONCLUSIÓN
          ============================================================ -->
-    <section class="slide section-divider" data-num="23">
+    <section class="slide section-divider" data-num="24">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/9; padding:80px; display:flex; flex-direction:column; justify-content:center;">
@@ -1269,7 +1304,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 30 — CIERRE / MENSAJE FINAL
          ============================================================ -->
-    <section class="slide" data-num="24">
+    <section class="slide" data-num="25">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel accent reveal" style="grid-column:1/13; grid-row:1/9; padding:96px; display:flex; flex-direction:column; justify-content:center;">
@@ -1282,7 +1317,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 33 — DEMO EN VIVO
          ============================================================ -->
-    <section class="slide" data-num="25">
+    <section class="slide" data-num="26">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center;">
@@ -1303,7 +1338,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE — CAJA DE HERRAMIENTAS (RESUMEN POR ETAPA DEL WORKFLOW)
          ============================================================ -->
-    <section class="slide" data-num="26">
+    <section class="slide" data-num="27">
       <div class="parallax-orbs"><div class="orb o2"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">
@@ -1332,6 +1367,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
             <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-cursor"/></svg></span>Cursor</div>
             <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-claude"/></svg></span>Claude Code</div>
             <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-rocket"/></svg></span>Antigravity</div>
+            <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-chip"/></svg></span>Devin</div>
             <div class="tool-chip" style="background:var(--accent-text); color:var(--accent);"><span class="ic"><svg><use href="#ic-docs"/></svg></span>Context7 MCP</div>
           </div>
         </div>
@@ -1353,10 +1389,11 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
           </div>
         </div>
         <div class="panel reveal" style="grid-column:9/13; grid-row:6/9; padding:24px; display:flex; flex-direction:column; justify-content:center; gap:12px;">
-          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale));">06</div><div class="label">Deploy · CLI</div></div>
+          <div style="display:flex; align-items:center; gap:10px;"><div class="flow-num" style="font-size:calc(22px * var(--text-scale));">06</div><div class="label">Deploy · Skills &amp; CLI</div></div>
           <div class="tool-row">
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-vercel"/></svg></span>Vercel CLI</div>
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-cloud"/></svg></span>Render CLI</div>
+            <div class="tool-chip"><span class="ic"><svg><use href="#ic-supabase"/></svg></span>Supabase CLI</div>
             <div class="tool-chip"><span class="ic"><svg><use href="#ic-diamond"/></svg></span>AI Studio (1-clic)</div>
           </div>
         </div>
@@ -1366,7 +1403,7 @@ em.hi{ font-style:normal; color:var(--accent-ink); }
     <!-- ============================================================
          SLIDE 32 — GRACIAS / FUENTES / REDES (CIERRE)
          ============================================================ -->
-    <section class="slide" data-num="27">
+    <section class="slide" data-num="28">
       <div class="parallax-orbs"><div class="orb o1"></div><div class="orb o3"></div></div>
       <div class="frame">
         <div class="panel ink reveal" style="grid-column:1/13; grid-row:1/2; padding:0 40px; display:flex; align-items:center; justify-content:space-between;">

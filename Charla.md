@@ -2,6 +2,8 @@
 
 *Nota de sincronización (recorte a 30 min): el deck (`slides/vibe-coding-charla.html`) se redujo de 34 a 27 slides para caber en el tiempo real de la charla. Se fusionaron o recortaron varias secciones (stats de adopción, NotebookLM, integración MCP→Linear/Jira, caso de uso de n8n, pipeline de diseño a 4 pasos) y se eliminó por completo la sección de selección de modelos (Opus/Sonnet/Haiku). Se añadió una nueva sección de cierre, "Caja de Herramientas de la Charla", con Chrome DevTools MCP y las CLIs de deploy (Vercel/Render) como recomendaciones nuevas. El texto de abajo ya refleja estos cambios.*
 
+*Nota de reorganización (28 slides): dentro del Bloque 3 se reordenaron las slides para que el flujo narrativo coincida con el orden real de un proyecto -contexto/skills primero, luego prototipado (diseño), luego implementación con TDD, luego despliegue- y ese mismo orden es el que resume la slide de pipeline "Del plan a un MVP funcional". Se añadió una slide nueva de Despliegue (skills de deploy + CLIs de Vercel/Render/Supabase) y se sumaron menciones a Cursor, Antigravity y Devin en la slide de TDD como ejemplos de quién ejecuta esa implementación. El texto de abajo ya refleja el nuevo orden.*
+
 Descripción: Descubre un flujo de trabajo práctico para transformar una idea en un MVP funcional en tiempo récord utilizando herramientas de Google y otras soluciones potenciadas por IA. Conocerás técnicas, trucos y buenas prácticas para validar, diseñar, desarrollar y acelerar la creación de productos de forma más eficiente.
 
 ¡Muy buenas noches para todos! Antes de entrar de lleno en materia, quiero contarles algo. Aunque el título de la charla menciona herramientas de Google, en realidad vamos a recorrer un panorama bastante más amplio: hoy son muchas las empresas -no solo Google- las que le están metiendo la ficha a la inteligencia artificial, así que también hablaremos de herramientas y soluciones de otros jugadores importantes en este espacio.
@@ -70,14 +72,6 @@ La IA puede optimizar la fase de gestión de requisitos, que suele ser un cuello
 - **Historias de Usuario y Gherkin:** A partir de esas notas, la IA genera **Historias de Usuario** (Como... quiero... para...) y **Criterios de Aceptación** en formato **Gherkin** (Given-When-Then). Esto define de manera inequívoca cuándo una tarea está "terminada".
 - **Integración con MCP:** Usando el **Model Context Protocol (MCP)**, agentes como Claude Code pueden conectarse directamente a herramientas como Linear o Jira para crear los tickets automáticamente, ahorrando días de trabajo administrativo.
 
-**Desarrollo Guiado por TDD con IA**
-
-Una vez creado el ticket, la IA puede aplicar **Test-Driven Development (TDD)**:
-
-- Crea una rama aislada en el repositorio.
-- Escribe primero los **tests vacíos** basados en los criterios de aceptación.
-- Implementa el código necesario para que los tests pasen de "rojo" a "verde".
-
 **El "Contexto" es el Rey**
 
 Para que la IA no alucine dentro de nuestro proyecto, debemos "enseñarle" nuestras reglas.
@@ -95,7 +89,9 @@ Ya vimos que el contexto es fundamental, pero no siempre queremos reescribir esa
 
 **MCP/Plugin de Base de Datos (por ejemplo, MongoDB):** En lugar de copiar manualmente esquemas a una carpeta de contexto, podemos conectar un MCP o plugin específico de nuestra base de datos -como el de MongoDB- para que la IA consulte la estructura real de las colecciones, entienda las relaciones entre los datos y proponga queries o migraciones con mayor precisión.
 
-**Bloque 3: Automatización, Prototipado y Seguridad**
+**Bloque 3: Diseño, Implementación y Despliegue**
+
+Con el contexto ya resuelto, toca recorrer el resto del ciclo en el mismo orden en que ocurre en un proyecto real: primero diseñamos y prototipamos, después implementamos, y por último desplegamos.
 
 **Prototipado Ultra-Rápido y n8n**
 
@@ -106,6 +102,20 @@ En esta misma línea de prototipado ultra-rápido está **Google Stitch**, un ex
 Para flujos de trabajo más complejos, herramientas como **n8n** permiten conectar más de 500 aplicaciones mediante **nodos y triggers**.
 
 - **Caso de uso:** Podemos crear un sistema de **Web Scraping con IA** que monitoree sitios web, filtre información específica (como cursos de Python) y guarde los resultados en una base de datos automáticamente.
+
+**Desarrollo Guiado por TDD con IA**
+
+Con el diseño listo, entramos a la implementación. La IA puede aplicar **Test-Driven Development (TDD)**:
+
+- Crea una rama aislada en el repositorio.
+- Escribe primero los **tests vacíos** basados en los criterios de aceptación.
+- Implementa el código necesario para que los tests pasen de "rojo" a "verde".
+
+¿Quién ejecuta esto en la práctica? Cualquiera de los editores y agentes de código que ya mencionamos: **Claude Code**, **Cursor**, el más reciente **Antigravity** de Google, o alternativas como **Devin** de Cognition Labs -un agente que llega a plantear el plan, implementar el código, correr las pruebas e incluso desplegar de forma autónoma dentro de su propio entorno-. La idea es la misma en todos: nosotros seguimos definiendo el "qué" y el "por qué"; el agente ejecuta el "cómo" bajo supervisión.
+
+**Despliegue: Skills y CLIs**
+
+Una vez el código pasa sus pruebas, falta el último paso: llevarlo a producción. Aquí conviene apoyarse en dos piezas: una **skill de despliegue**, que le enseña al agente el checklist completo -build, variables de entorno, migraciones, verificación post-deploy- para no repetirlo manualmente en cada proyecto; y las **CLIs oficiales** de las plataformas de hosting, como las de **Vercel**, **Render** o **Supabase**. Usar la CLI en lugar de un dashboard nos permite scriptear el despliegue e integrarlo directamente a CI/CD, en vez de hacer clic manualmente cada vez.
 
 **El Flujo de Diseño a Desarrollo: Stitch, Figma y Antigravity**
 
@@ -134,7 +144,7 @@ Antes de despedirme, quiero dejarles un resumen rápido: un mapa de todas las he
 
 - **01 · Investigación & Requisitos:** NotebookLM, Gemini, integración con Linear/Jira vía MCP.
 - **02 · Diseño:** Google Stitch, Figma (MCP).
-- **03 · Desarrollo & Contexto:** Cursor, Claude Code, Antigravity, Context7 (MCP).
+- **03 · Desarrollo & Contexto:** Cursor, Claude Code, Antigravity, Devin, Context7 (MCP).
 - **04 · Backend & Datos:** Supabase, Firebase, MongoDB (MCP).
 - **05 · QA & Automatización:** Antigravity QA (control de navegador), **MCP Chrome DevTools** -para que el agente inspeccione consola, red y DOM del navegador en tiempo real durante las pruebas, sin salir del editor-, y n8n para automatizaciones más amplias.
 - **06 · Deploy (CLI):** además de Google AI Studio con su despliegue de un clic, para proyectos que crecen más allá de eso recomiendo apoyarse en las CLIs oficiales de plataformas como **Vercel** o **Render**: permiten scriptear el despliegue, integrarlo a CI/CD y repetirlo de forma consistente en lugar de hacer clic manualmente en un dashboard cada vez.
@@ -147,6 +157,12 @@ La IA es la herramienta más avanzada que hemos tenido jamás para construir, pe
 
 <br/><br/><br/>Fuentes:  
 \- <https://blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025/?utm_source=chatgpt.com>  
-<br/>\- <https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/?utm_source=chatgpt.com>
+<br/>\- <https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/?utm_source=chatgpt.com>  
+<br/>\- <https://developers.googleblog.com/build-with-google-antigravity-our-new-agentic-development-platform/> (Google Antigravity)  
+<br/>\- <https://antigravity.google/> (Google Antigravity, sitio oficial)  
+<br/>\- <https://cognition.ai/> (Cognition Labs / Devin)  
+<br/>\- <https://vercel.com/docs/cli> (Vercel CLI)  
+<br/>\- <https://render.com/docs/cli> (Render CLI)  
+<br/>\- <https://supabase.com/docs/guides/local-development/cli/getting-started> (Supabase CLI)
 
 \-
